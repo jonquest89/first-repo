@@ -1,0 +1,614 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>The Common Thread</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<style>
+  :root{
+    --paper:#F5F4EE;
+    --paper-raised:#FDFCF8;
+    --ink:#1C2033;
+    --ink-soft:#5A5E70;
+    --rule:#C9C7BC;
+    --accent:#2742C9;
+    --accent-ink:#FDFCF8;
+    --gold:#C9930A;
+    --gold-soft:#F3E4BC;
+    --green:#2F7D4F;
+    --green-ink:#FDFCF8;
+    --red:#B23A3A;
+    --tile-empty:#E9E7DE;
+    --key:#FDFCF8;
+    --key-ink:#1C2033;
+    --key-border:#C9C7BC;
+    --shadow:0 1px 2px rgba(28,32,51,.10);
+  }
+  @media (prefers-color-scheme: dark){
+    :root{
+      --paper:#14161F;
+      --paper-raised:#1E2130;
+      --ink:#ECEAE2;
+      --ink-soft:#9A9DB0;
+      --rule:#383C50;
+      --accent:#7D90F5;
+      --accent-ink:#14161F;
+      --gold:#E3B84A;
+      --gold-soft:#3A3320;
+      --green:#4CAE78;
+      --green-ink:#14161F;
+      --red:#E07A7A;
+      --tile-empty:#262A3B;
+      --key:#2A2E42;
+      --key-ink:#ECEAE2;
+      --key-border:#3B4058;
+      --shadow:0 1px 2px rgba(0,0,0,.35);
+    }
+  }
+  :root[data-theme="light"]{
+    --paper:#F5F4EE; --paper-raised:#FDFCF8; --ink:#1C2033; --ink-soft:#5A5E70;
+    --rule:#C9C7BC; --accent:#2742C9; --accent-ink:#FDFCF8; --gold:#C9930A;
+    --gold-soft:#F3E4BC; --green:#2F7D4F; --green-ink:#FDFCF8; --red:#B23A3A;
+    --tile-empty:#E9E7DE; --key:#FDFCF8; --key-ink:#1C2033; --key-border:#C9C7BC;
+    --shadow:0 1px 2px rgba(28,32,51,.10);
+  }
+  :root[data-theme="dark"]{
+    --paper:#14161F; --paper-raised:#1E2130; --ink:#ECEAE2; --ink-soft:#9A9DB0;
+    --rule:#383C50; --accent:#7D90F5; --accent-ink:#14161F; --gold:#E3B84A;
+    --gold-soft:#3A3320; --green:#4CAE78; --green-ink:#14161F; --red:#E07A7A;
+    --tile-empty:#262A3B; --key:#2A2E42; --key-ink:#ECEAE2; --key-border:#3B4058;
+    --shadow:0 1px 2px rgba(0,0,0,.35);
+  }
+
+  *{ box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+  html,body{ height:100%; }
+  body{
+    margin:0;
+    background:var(--paper);
+    color:var(--ink);
+    font-family:-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    display:flex; flex-direction:column; align-items:center;
+    min-height:100dvh;
+    overflow:hidden;
+    touch-action:manipulation;
+  }
+  #app{
+    width:100%; max-width:480px;
+    min-height:100dvh; max-height:100dvh;
+    display:flex; flex-direction:column;
+    padding:calc(env(safe-area-inset-top, 0px) + 10px) 14px calc(env(safe-area-inset-bottom, 0px) + 10px);
+  }
+
+  /* ---------- Masthead ---------- */
+  header{
+    text-align:center;
+    border-bottom:3px double var(--rule);
+    padding-bottom:8px;
+    flex:0 0 auto;
+  }
+  .masthead{
+    font-family:"Iowan Old Style", Palatino, "Palatino Linotype", "Book Antiqua", Georgia, serif;
+    font-size:clamp(24px, 7vw, 32px);
+    font-weight:700;
+    letter-spacing:.01em;
+    line-height:1.1;
+    margin:0;
+    text-wrap:balance;
+  }
+  .masthead .plus{ color:var(--accent); }
+  .dateline{
+    display:flex; justify-content:center; gap:10px;
+    font-size:10px; letter-spacing:.14em; text-transform:uppercase;
+    color:var(--ink-soft); margin-top:5px;
+    font-variant-numeric:tabular-nums;
+  }
+  .dateline > span + span::before{ content:"·"; margin-right:10px; color:var(--rule); }
+
+  /* ---------- Score strip ---------- */
+  .strip{
+    display:flex; justify-content:space-between; align-items:baseline;
+    padding:8px 2px 6px;
+    font-size:12px; color:var(--ink-soft);
+    letter-spacing:.06em; text-transform:uppercase;
+    font-variant-numeric:tabular-nums;
+    flex:0 0 auto;
+  }
+  .strip b{ color:var(--ink); font-size:15px; letter-spacing:0; }
+  .strip .streak-on b{ color:var(--gold); }
+
+  /* ---------- Clue card ---------- */
+  main{
+    flex:1 1 auto; min-height:0;
+    display:flex; flex-direction:column; justify-content:space-evenly;
+    gap:4px;
+  }
+  .prompt{
+    text-align:center; font-size:13px; color:var(--ink-soft);
+    font-style:italic;
+    font-family:"Iowan Old Style", Palatino, Georgia, serif;
+    margin:2px 0 0;
+  }
+  #clues{
+    display:flex; flex-direction:column; gap:8px;
+  }
+  .clue{
+    background:var(--paper-raised);
+    border:1px solid var(--rule);
+    border-radius:6px;
+    box-shadow:var(--shadow);
+    padding:10px 12px;
+    display:flex; align-items:center; justify-content:center; gap:8px;
+    font-size:clamp(18px, 5.4vw, 24px);
+    font-weight:600;
+    letter-spacing:.04em;
+  }
+  .clue .word{ text-transform:uppercase; }
+  .clue .slot{
+    display:inline-flex; align-items:center; justify-content:center;
+    min-width:1.5em; height:1.5em;
+    padding:0 .3em;
+    border-radius:5px;
+    background:var(--accent);
+    color:var(--accent-ink);
+    font-size:.85em;
+    font-weight:800;
+    transition:background .3s;
+  }
+  .clue.solved .slot{ background:var(--green); color:var(--green-ink); }
+
+  /* ---------- Answer tiles ---------- */
+  #answer{
+    display:flex; justify-content:center; gap:6px;
+    padding:2px 0;
+  }
+  .tile{
+    width:clamp(38px, 11.5vw, 52px);
+    aspect-ratio:1;
+    border-radius:6px;
+    background:var(--tile-empty);
+    border:2px solid transparent;
+    display:flex; align-items:center; justify-content:center;
+    font-size:clamp(20px, 6vw, 28px);
+    font-weight:800;
+    text-transform:uppercase;
+    color:var(--ink);
+    transition:transform .12s, background .2s, border-color .2s;
+  }
+  .tile.filled{ border-color:var(--ink-soft); background:var(--paper-raised); transform:scale(1.04); }
+  .tile.hinted{ background:var(--gold-soft); border-color:var(--gold); color:var(--gold); }
+  .tile.correct{ background:var(--green); border-color:var(--green); color:var(--green-ink); }
+  @keyframes flip{
+    0%{ transform:rotateX(0); }
+    50%{ transform:rotateX(90deg); }
+    100%{ transform:rotateX(0); }
+  }
+  .tile.flip{ animation:flip .45s ease both; }
+  @keyframes shake{
+    0%,100%{ transform:translateX(0); }
+    20%{ transform:translateX(-6px); }
+    40%{ transform:translateX(6px); }
+    60%{ transform:translateX(-4px); }
+    80%{ transform:translateX(4px); }
+  }
+  #answer.shake{ animation:shake .4s ease; }
+  @media (prefers-reduced-motion: reduce){
+    .tile.flip, #answer.shake{ animation:none; }
+    .tile.filled{ transform:none; }
+  }
+
+  /* ---------- Message + actions ---------- */
+  #message{
+    text-align:center; min-height:20px;
+    font-size:14px; font-weight:600;
+  }
+  #message.win{ color:var(--green); }
+  #message.err{ color:var(--red); }
+  .actions{
+    display:flex; justify-content:center; gap:10px;
+    flex:0 0 auto;
+  }
+  .btn{
+    appearance:none; border:1px solid var(--rule);
+    background:var(--paper-raised); color:var(--ink);
+    border-radius:999px;
+    padding:9px 18px;
+    font-size:13px; font-weight:700;
+    letter-spacing:.08em; text-transform:uppercase;
+    cursor:pointer;
+    box-shadow:var(--shadow);
+  }
+  .btn:active{ transform:translateY(1px); }
+  .btn:focus-visible, .key:focus-visible{ outline:2px solid var(--accent); outline-offset:2px; }
+  .btn.hint{ color:var(--gold); border-color:var(--gold); }
+  .btn.primary{ background:var(--accent); color:var(--accent-ink); border-color:var(--accent); }
+  .btn[disabled]{ opacity:.4; cursor:default; }
+
+  /* ---------- Keyboard ---------- */
+  #keyboard{
+    flex:0 0 auto;
+    display:flex; flex-direction:column; gap:6px;
+    padding-top:8px;
+    user-select:none; -webkit-user-select:none;
+  }
+  .krow{ display:flex; justify-content:center; gap:5px; }
+  .key{
+    appearance:none; border:1px solid var(--key-border);
+    background:var(--key); color:var(--key-ink);
+    border-radius:5px;
+    flex:1 1 0; max-width:42px;
+    height:46px;
+    font-size:16px; font-weight:700;
+    text-transform:uppercase;
+    cursor:pointer;
+    box-shadow:var(--shadow);
+    display:flex; align-items:center; justify-content:center;
+    padding:0;
+  }
+  .key.wide{ max-width:66px; flex:1.6 1 0; font-size:12px; letter-spacing:.05em; }
+  .key:active{ background:var(--tile-empty); transform:translateY(1px); }
+
+  /* ---------- Win overlay ---------- */
+  #done{
+    position:fixed; inset:0;
+    background:var(--paper);
+    display:none;
+    flex-direction:column; align-items:center; justify-content:center;
+    gap:14px; text-align:center; padding:24px;
+  }
+  #done.show{ display:flex; }
+  #done h2{
+    font-family:"Iowan Old Style", Palatino, Georgia, serif;
+    font-size:30px; margin:0;
+  }
+  #done p{ color:var(--ink-soft); max-width:36ch; margin:0; line-height:1.5; }
+</style>
+
+</head>
+<body>
+<div id="app">
+  <header>
+    <h1 class="masthead">The Common<span class="plus"> + </span>Thread</h1>
+    <div class="dateline">
+      <span>Puzzle <span id="pnum">1</span> of <span id="ptotal">40</span></span>
+      <span>Est. 2026</span>
+    </div>
+  </header>
+
+  <div class="strip">
+    <span>Score <b id="score">0</b></span>
+    <span class="streak-wrap">Streak <b id="streak">0</b></span>
+    <span>Solved <b id="solvedCount">0</b></span>
+  </div>
+
+  <main>
+    <p class="prompt">One word completes all three&hellip;</p>
+    <div id="clues" aria-live="polite"></div>
+    <div id="answer" aria-label="Your answer"></div>
+    <div id="message" role="status"></div>
+    <div class="actions">
+      <button class="btn hint" id="hintBtn">Hint&nbsp;&minus;3</button>
+      <button class="btn" id="skipBtn">Skip</button>
+      <button class="btn primary" id="nextBtn" style="display:none">Next&nbsp;&rarr;</button>
+    </div>
+  </main>
+
+  <div id="keyboard" aria-label="Keyboard"></div>
+</div>
+
+<div id="done">
+  <h2>Extra! Extra!</h2>
+  <p id="doneStats"></p>
+  <p>You solved every puzzle in this edition. Play again from the top?</p>
+  <button class="btn primary" id="resetBtn">Start over</button>
+</div>
+
+<script>
+(function(){
+"use strict";
+
+/* Each clue: word + side. side "before" = clue word comes before the answer
+   (GOAT+), side "after" = clue word comes after the answer (+STICK). */
+var PUZZLES = [
+  { a:"CHEESE", c:[["STICK","after"],["GOAT","before"],["WHEEL","after"]] },
+  { a:"FIRE",   c:[["CAMP","before"],["WORKS","after"],["FLY","after"]] },
+  { a:"WATER",  c:[["FALL","after"],["SALT","before"],["MELON","after"]] },
+  { a:"SUN",    c:[["FLOWER","after"],["SCREEN","after"],["RISE","after"]] },
+  { a:"BOOK",   c:[["NOTE","before"],["WORM","after"],["SHELF","after"]] },
+  { a:"LIGHT",  c:[["FLASH","before"],["MOON","before"],["HOUSE","after"]] },
+  { a:"BALL",   c:[["BASKET","before"],["EYE","before"],["PARK","after"]] },
+  { a:"SNOW",   c:[["MAN","after"],["FLAKE","after"],["STORM","after"]] },
+  { a:"DOG",    c:[["HOT","before"],["WATCH","before"],["HOUSE","after"]] },
+  { a:"RAIN",   c:[["BOW","after"],["COAT","after"],["FOREST","after"]] },
+  { a:"STAR",   c:[["FISH","after"],["ROCK","before"],["SHOOTING","before"]] },
+  { a:"CAKE",   c:[["CUP","before"],["PAN","before"],["BIRTHDAY","before"]] },
+  { a:"HORSE",  c:[["SEA","before"],["SHOE","after"],["POWER","after"]] },
+  { a:"BOARD",  c:[["SKATE","before"],["KEY","before"],["SURF","before"]] },
+  { a:"HOUSE",  c:[["BIRD","before"],["GREEN","before"],["PLANT","after"]] },
+  { a:"POT",    c:[["JACK","before"],["TEA","before"],["HOLE","after"]] },
+  { a:"BOX",    c:[["SAND","before"],["MAIL","before"],["LUNCH","before"]] },
+  { a:"PAPER",  c:[["NEWS","before"],["WALL","before"],["CLIP","after"]] },
+  { a:"BED",    c:[["TIME","after"],["ROOM","after"],["FLOWER","before"]] },
+  { a:"MOON",   c:[["HONEY","before"],["FULL","before"],["WALK","after"]] },
+  { a:"WORK",   c:[["HOME","before"],["OUT","after"],["TEAM","before"]] },
+  { a:"FISH",   c:[["JELLY","before"],["GOLD","before"],["HOOK","after"]] },
+  { a:"HAND",   c:[["SHAKE","after"],["SECOND","before"],["BAG","after"]] },
+  { a:"EYE",    c:[["BROW","after"],["RED","before"],["LASH","after"]] },
+  { a:"HEAD",   c:[["ACHE","after"],["FORE","before"],["LINE","after"]] },
+  { a:"FOOT",   c:[["PRINT","after"],["BARE","before"],["BALL","after"]] },
+  { a:"NIGHT",  c:[["MARE","after"],["MID","before"],["OVER","before"]] },
+  { a:"TABLE",  c:[["SPOON","after"],["TIME","before"],["CLOTH","after"]] },
+  { a:"AIR",    c:[["PORT","after"],["PLANE","after"],["LINE","after"]] },
+  { a:"SIDE",   c:[["KICK","after"],["ROAD","before"],["WALK","after"]] },
+  { a:"LAND",   c:[["SLIDE","after"],["MARK","after"],["MAIN","before"]] },
+  { a:"WOOD",   c:[["DRIFT","before"],["PECKER","after"],["HOLLY","before"]] },
+  { a:"MILK",   c:[["SHAKE","after"],["BUTTER","before"],["COCONUT","before"]] },
+  { a:"STONE",  c:[["LIME","before"],["WALL","after"],["MILE","before"]] },
+  { a:"BREAD",  c:[["GINGER","before"],["CRUMB","after"],["SHORT","before"]] },
+  { a:"PLAY",   c:[["GROUND","after"],["HORSE","before"],["TIME","after"]] },
+  { a:"GRASS",  c:[["HOPPER","after"],["LEMON","before"],["SEA","before"]] },
+  { a:"SHIP",   c:[["FRIEND","before"],["WRECK","after"],["SPACE","before"]] },
+  { a:"RING",   c:[["EAR","before"],["TONE","after"],["BOXING","before"]] },
+  { a:"NUT",    c:[["PEA","before"],["DOUGH","before"],["COCO","before"]] }
+];
+
+var STORE_KEY = "commonthread-v1";
+
+function loadState(){
+  try{
+    var s = JSON.parse(localStorage.getItem(STORE_KEY));
+    if (s && typeof s.idx === "number") return s;
+  }catch(e){}
+  return { idx:0, score:0, streak:0, solved:0 };
+}
+function saveState(){
+  try{ localStorage.setItem(STORE_KEY, JSON.stringify(state)); }catch(e){}
+}
+
+var state = loadState();
+
+var guess = [];        // player letters, null = empty
+var locked = [];       // true where a hint revealed the letter
+var solvedNow = false;
+var hintsUsed = 0;
+
+var $ = function(id){ return document.getElementById(id); };
+var cluesEl = $("clues"), answerEl = $("answer"), msgEl = $("message");
+var hintBtn = $("hintBtn"), skipBtn = $("skipBtn"), nextBtn = $("nextBtn");
+
+function puzzle(){ return PUZZLES[state.idx]; }
+
+function renderHUD(){
+  $("pnum").textContent = state.idx + 1;
+  $("ptotal").textContent = PUZZLES.length;
+  $("score").textContent = state.score;
+  $("streak").textContent = state.streak;
+  $("solvedCount").textContent = state.solved;
+  document.querySelector(".streak-wrap").classList.toggle("streak-on", state.streak >= 3);
+}
+
+function renderClues(showAnswer){
+  cluesEl.innerHTML = "";
+  puzzle().c.forEach(function(pair){
+    var row = document.createElement("div");
+    row.className = "clue" + (showAnswer ? " solved" : "");
+    var slot = document.createElement("span");
+    slot.className = "slot";
+    slot.textContent = showAnswer ? puzzle().a : "+";
+    var word = document.createElement("span");
+    word.className = "word";
+    word.textContent = pair[0];
+    if (pair[1] === "before"){ row.appendChild(word); row.appendChild(slot); }
+    else { row.appendChild(slot); row.appendChild(word); }
+    cluesEl.appendChild(row);
+  });
+}
+
+function renderAnswer(){
+  answerEl.innerHTML = "";
+  var a = puzzle().a;
+  for (var i = 0; i < a.length; i++){
+    var t = document.createElement("div");
+    t.className = "tile";
+    if (locked[i]){ t.classList.add("hinted","filled"); t.textContent = a[i]; }
+    else if (guess[i]){ t.classList.add("filled"); t.textContent = guess[i]; }
+    answerEl.appendChild(t);
+  }
+}
+
+function setMessage(text, kind){
+  msgEl.textContent = text || "";
+  msgEl.className = kind || "";
+}
+
+function startPuzzle(){
+  var a = puzzle().a;
+  guess = new Array(a.length).fill(null);
+  locked = new Array(a.length).fill(false);
+  solvedNow = false;
+  hintsUsed = 0;
+  nextBtn.style.display = "none";
+  hintBtn.style.display = "";
+  skipBtn.style.display = "";
+  hintBtn.disabled = false;
+  setMessage("");
+  renderHUD();
+  renderClues(false);
+  renderAnswer();
+}
+
+function firstEmpty(){
+  for (var i = 0; i < guess.length; i++)
+    if (!locked[i] && !guess[i]) return i;
+  return -1;
+}
+function lastFilled(){
+  for (var i = guess.length - 1; i >= 0; i--)
+    if (!locked[i] && guess[i]) return i;
+  return -1;
+}
+
+function typeLetter(ch){
+  if (solvedNow) return;
+  var i = firstEmpty();
+  if (i === -1) return;
+  guess[i] = ch;
+  renderAnswer();
+}
+function backspace(){
+  if (solvedNow) return;
+  var i = lastFilled();
+  if (i === -1) return;
+  guess[i] = null;
+  setMessage("");
+  renderAnswer();
+}
+
+function currentWord(){
+  var a = puzzle().a, out = "";
+  for (var i = 0; i < a.length; i++){
+    var ch = locked[i] ? a[i] : guess[i];
+    if (!ch) return null;
+    out += ch;
+  }
+  return out;
+}
+
+function check(){
+  if (solvedNow) return;
+  var w = currentWord();
+  if (!w){ setMessage("Fill in every letter first.", "err"); return; }
+  if (w === puzzle().a){ win(); }
+  else {
+    state.streak = 0;
+    saveState(); renderHUD();
+    setMessage("Not the one — try again.", "err");
+    answerEl.classList.remove("shake");
+    void answerEl.offsetWidth;
+    answerEl.classList.add("shake");
+  }
+}
+
+function win(){
+  solvedNow = true;
+  state.score += Math.max(10 - 3 * hintsUsed, 2);
+  state.streak += 1;
+  state.solved += 1;
+  saveState();
+  renderHUD();
+  var tiles = answerEl.children;
+  var a = puzzle().a;
+  for (var i = 0; i < tiles.length; i++){
+    (function(t, ch, d){
+      setTimeout(function(){
+        t.classList.remove("hinted");
+        t.classList.add("correct","flip");
+        t.textContent = ch;
+      }, d);
+    })(tiles[i], a[i], i * 90);
+  }
+  setTimeout(function(){ renderClues(true); }, a.length * 90 + 200);
+  setMessage(praise(), "win");
+  hintBtn.style.display = "none";
+  skipBtn.style.display = "none";
+  nextBtn.style.display = "";
+  nextBtn.textContent = (state.idx + 1 < PUZZLES.length) ? "Next →" : "Finish";
+}
+
+function praise(){
+  var lines = ["Threaded it!","Sharp as newsprint!","Front-page material!","Hot off the press!","A real wordsmith!"];
+  return lines[state.solved % lines.length];
+}
+
+function hint(){
+  if (solvedNow) return;
+  var a = puzzle().a;
+  var spots = [];
+  for (var i = 0; i < a.length; i++) if (!locked[i]) spots.push(i);
+  if (spots.length <= 1){ hintBtn.disabled = true; return; }
+  var i = spots[0];
+  locked[i] = true;
+  guess[i] = null;
+  hintsUsed += 1;
+  state.score = Math.max(0, state.score - 3);
+  saveState();
+  renderHUD();
+  renderAnswer();
+  var left = 0;
+  for (var j = 0; j < a.length; j++) if (!locked[j]) left++;
+  if (left <= 1) hintBtn.disabled = true;
+}
+
+function advance(){
+  if (state.idx + 1 >= PUZZLES.length){
+    $("doneStats").textContent = "Final score: " + state.score + " · " + state.solved + " solved";
+    $("done").classList.add("show");
+    return;
+  }
+  state.idx += 1;
+  saveState();
+  startPuzzle();
+}
+
+function skip(){
+  state.streak = 0;
+  saveState();
+  if (state.idx + 1 >= PUZZLES.length){
+    state.idx = 0;
+    saveState();
+    startPuzzle();
+    return;
+  }
+  advance();
+}
+
+/* ---------- keyboard ---------- */
+var ROWS = ["QWERTYUIOP","ASDFGHJKL","ZXCVBNM"];
+var kb = $("keyboard");
+ROWS.forEach(function(row, ri){
+  var r = document.createElement("div");
+  r.className = "krow";
+  if (ri === 2){
+    r.appendChild(makeKey("ENTER", "wide", check));
+  }
+  row.split("").forEach(function(ch){
+    r.appendChild(makeKey(ch, "", function(){ typeLetter(ch); }));
+  });
+  if (ri === 2){
+    r.appendChild(makeKey("⌫", "wide", backspace, "Backspace"));
+  }
+  kb.appendChild(r);
+});
+function makeKey(label, cls, fn, aria){
+  var k = document.createElement("button");
+  k.type = "button";
+  k.className = "key" + (cls ? " " + cls : "");
+  k.textContent = label;
+  if (aria) k.setAttribute("aria-label", aria);
+  k.addEventListener("click", fn);
+  return k;
+}
+
+document.addEventListener("keydown", function(e){
+  if (e.metaKey || e.ctrlKey || e.altKey) return;
+  if (e.key === "Enter"){ solvedNow ? advance() : check(); }
+  else if (e.key === "Backspace"){ backspace(); }
+  else if (/^[a-zA-Z]$/.test(e.key)){ typeLetter(e.key.toUpperCase()); }
+});
+
+hintBtn.addEventListener("click", hint);
+skipBtn.addEventListener("click", skip);
+nextBtn.addEventListener("click", advance);
+$("resetBtn").addEventListener("click", function(){
+  state = { idx:0, score:0, streak:0, solved:0 };
+  saveState();
+  $("done").classList.remove("show");
+  startPuzzle();
+});
+
+if (state.idx >= PUZZLES.length) state.idx = 0;
+startPuzzle();
+})();
+</script>
+
+</body>
+</html>
