@@ -88,7 +88,7 @@
   }
   .masthead{
     font-family:"Iowan Old Style", Palatino, "Palatino Linotype", "Book Antiqua", Georgia, serif;
-    font-size:clamp(24px, 7vw, 32px);
+    font-size:clamp(22px, 6.5vw, 30px);
     font-weight:700;
     letter-spacing:.01em;
     line-height:1.1;
@@ -99,46 +99,69 @@
   .dateline{
     display:flex; justify-content:center; gap:10px;
     font-size:10px; letter-spacing:.14em; text-transform:uppercase;
-    color:var(--ink-soft); margin-top:5px;
+    color:var(--ink-soft); margin-top:4px;
     font-variant-numeric:tabular-nums;
   }
   .dateline > span + span::before{ content:"·"; margin-right:10px; color:var(--rule); }
 
+  /* ---------- Tier tabs ---------- */
+  .tiers{
+    display:flex; justify-content:center; gap:6px;
+    padding:8px 0 2px;
+    flex:0 0 auto;
+  }
+  .tab{
+    appearance:none; cursor:pointer;
+    background:none; border:1px solid var(--rule);
+    color:var(--ink-soft);
+    border-radius:999px;
+    padding:5px 14px;
+    font-size:11px; font-weight:700;
+    letter-spacing:.1em; text-transform:uppercase;
+  }
+  .tab.active{
+    background:var(--accent); border-color:var(--accent);
+    color:var(--accent-ink);
+  }
+  .tab .done-mark{ color:var(--gold); }
+  .tab.active .done-mark{ color:var(--accent-ink); }
+  .tab:focus-visible{ outline:2px solid var(--accent); outline-offset:2px; }
+
   /* ---------- Score strip ---------- */
   .strip{
     display:flex; justify-content:space-between; align-items:baseline;
-    padding:8px 2px 6px;
-    font-size:12px; color:var(--ink-soft);
+    padding:6px 2px 4px;
+    font-size:11px; color:var(--ink-soft);
     letter-spacing:.06em; text-transform:uppercase;
     font-variant-numeric:tabular-nums;
     flex:0 0 auto;
   }
-  .strip b{ color:var(--ink); font-size:15px; letter-spacing:0; }
+  .strip b{ color:var(--ink); font-size:14px; letter-spacing:0; }
   .strip .streak-on b{ color:var(--gold); }
 
   /* ---------- Clue card ---------- */
   main{
     flex:1 1 auto; min-height:0;
     display:flex; flex-direction:column; justify-content:space-evenly;
-    gap:4px;
+    gap:3px;
   }
   .prompt{
     text-align:center; font-size:13px; color:var(--ink-soft);
     font-style:italic;
     font-family:"Iowan Old Style", Palatino, Georgia, serif;
-    margin:2px 0 0;
+    margin:0;
   }
   #clues{
-    display:flex; flex-direction:column; gap:8px;
+    display:flex; flex-direction:column; gap:7px;
   }
   .clue{
     background:var(--paper-raised);
     border:1px solid var(--rule);
     border-radius:6px;
     box-shadow:var(--shadow);
-    padding:10px 12px;
+    padding:9px 12px;
     display:flex; align-items:center; justify-content:center; gap:8px;
-    font-size:clamp(18px, 5.4vw, 24px);
+    font-size:clamp(17px, 5vw, 22px);
     font-weight:600;
     letter-spacing:.04em;
   }
@@ -155,6 +178,7 @@
     transition:background .3s;
   }
   .clue.solved .slot{ background:var(--green); color:var(--green-ink); }
+  .clue.given .slot{ background:var(--red); color:var(--accent-ink); }
 
   /* ---------- Answer tiles ---------- */
   #answer{
@@ -162,13 +186,13 @@
     padding:2px 0;
   }
   .tile{
-    width:clamp(38px, 11.5vw, 52px);
+    width:clamp(34px, 10.5vw, 50px);
     aspect-ratio:1;
     border-radius:6px;
     background:var(--tile-empty);
     border:2px solid transparent;
     display:flex; align-items:center; justify-content:center;
-    font-size:clamp(20px, 6vw, 28px);
+    font-size:clamp(19px, 5.5vw, 26px);
     font-weight:800;
     text-transform:uppercase;
     color:var(--ink);
@@ -177,6 +201,7 @@
   .tile.filled{ border-color:var(--ink-soft); background:var(--paper-raised); transform:scale(1.04); }
   .tile.hinted{ background:var(--gold-soft); border-color:var(--gold); color:var(--gold); }
   .tile.correct{ background:var(--green); border-color:var(--green); color:var(--green-ink); }
+  .tile.given{ background:var(--paper-raised); border-color:var(--red); color:var(--red); }
   @keyframes flip{
     0%{ transform:rotateX(0); }
     50%{ transform:rotateX(90deg); }
@@ -204,15 +229,15 @@
   #message.win{ color:var(--green); }
   #message.err{ color:var(--red); }
   .actions{
-    display:flex; justify-content:center; gap:10px;
+    display:flex; justify-content:center; gap:8px;
     flex:0 0 auto;
   }
   .btn{
     appearance:none; border:1px solid var(--rule);
     background:var(--paper-raised); color:var(--ink);
     border-radius:999px;
-    padding:9px 18px;
-    font-size:13px; font-weight:700;
+    padding:9px 16px;
+    font-size:12px; font-weight:700;
     letter-spacing:.08em; text-transform:uppercase;
     cursor:pointer;
     box-shadow:var(--shadow);
@@ -220,6 +245,7 @@
   .btn:active{ transform:translateY(1px); }
   .btn:focus-visible, .key:focus-visible{ outline:2px solid var(--accent); outline-offset:2px; }
   .btn.hint{ color:var(--gold); border-color:var(--gold); }
+  .btn.reveal{ color:var(--red); border-color:var(--red); }
   .btn.primary{ background:var(--accent); color:var(--accent-ink); border-color:var(--accent); }
   .btn[disabled]{ opacity:.4; cursor:default; }
 
@@ -247,7 +273,7 @@
   .key.wide{ max-width:66px; flex:1.6 1 0; font-size:12px; letter-spacing:.05em; }
   .key:active{ background:var(--tile-empty); transform:translateY(1px); }
 
-  /* ---------- Win overlay ---------- */
+  /* ---------- Tier-complete overlay ---------- */
   #done{
     position:fixed; inset:0;
     background:var(--paper);
@@ -261,6 +287,7 @@
     font-size:30px; margin:0;
   }
   #done p{ color:var(--ink-soft); max-width:36ch; margin:0; line-height:1.5; }
+  #done .actions{ flex-wrap:wrap; }
 </style>
 
 </head>
@@ -269,15 +296,22 @@
   <header>
     <h1 class="masthead">The Common<span class="plus"> + </span>Thread</h1>
     <div class="dateline">
+      <span id="tiername">Easy edition</span>
       <span>Puzzle <span id="pnum">1</span> of <span id="ptotal">40</span></span>
-      <span>Est. 2026</span>
     </div>
   </header>
+
+  <div class="tiers" role="tablist" aria-label="Difficulty">
+    <button class="tab" data-tier="easy" role="tab">Easy</button>
+    <button class="tab" data-tier="medium" role="tab">Medium</button>
+    <button class="tab" data-tier="hard" role="tab">Hard</button>
+  </div>
 
   <div class="strip">
     <span>Score <b id="score">0</b></span>
     <span class="streak-wrap">Streak <b id="streak">0</b></span>
     <span>Solved <b id="solvedCount">0</b></span>
+    <span>Time <b id="clock">0:00</b></span>
   </div>
 
   <main>
@@ -286,7 +320,8 @@
     <div id="answer" aria-label="Your answer"></div>
     <div id="message" role="status"></div>
     <div class="actions">
-      <button class="btn hint" id="hintBtn">Hint&nbsp;&minus;3</button>
+      <button class="btn hint" id="hintBtn">Hint&nbsp;&minus;2</button>
+      <button class="btn reveal" id="revealBtn">Reveal</button>
       <button class="btn" id="skipBtn">Skip</button>
       <button class="btn primary" id="nextBtn" style="display:none">Next&nbsp;&rarr;</button>
     </div>
@@ -296,69 +331,164 @@
 </div>
 
 <div id="done">
-  <h2>Extra! Extra!</h2>
+  <h2 id="doneTitle">Edition complete!</h2>
   <p id="doneStats"></p>
-  <p>You solved every puzzle in this edition. Play again from the top?</p>
-  <button class="btn primary" id="resetBtn">Start over</button>
+  <p id="doneNote"></p>
+  <div class="actions">
+    <button class="btn" id="replayBtn">Replay</button>
+    <button class="btn primary" id="nextTierBtn">Next edition &rarr;</button>
+  </div>
 </div>
 
 <script>
 (function(){
 "use strict";
 
-/* Each clue: word + side. side "before" = clue word comes before the answer
-   (GOAT+), side "after" = clue word comes after the answer (+STICK). */
+/* Each puzzle: a = answer, d = difficulty tier, c = three [clueWord, side]
+   pairs. side "before" = clue word comes before the answer (GOAT+),
+   side "after" = clue word comes after the answer (+STICK).
+   The bank is validated by tools/validate-puzzles.mjs (structure +
+   dictionary collision scan). Run it after editing this list. */
 var PUZZLES = [
-  { a:"CHEESE", c:[["STICK","after"],["GOAT","before"],["WHEEL","after"]] },
-  { a:"FIRE",   c:[["CAMP","before"],["WORKS","after"],["FLY","after"]] },
-  { a:"WATER",  c:[["FALL","after"],["SALT","before"],["MELON","after"]] },
-  { a:"SUN",    c:[["FLOWER","after"],["SCREEN","after"],["RISE","after"]] },
-  { a:"BOOK",   c:[["NOTE","before"],["WORM","after"],["SHELF","after"]] },
-  { a:"LIGHT",  c:[["FLASH","before"],["MOON","before"],["HOUSE","after"]] },
-  { a:"BALL",   c:[["BASKET","before"],["EYE","before"],["PARK","after"]] },
-  { a:"SNOW",   c:[["MAN","after"],["FLAKE","after"],["STORM","after"]] },
-  { a:"DOG",    c:[["HOT","before"],["WATCH","before"],["HOUSE","after"]] },
-  { a:"RAIN",   c:[["BOW","after"],["COAT","after"],["FOREST","after"]] },
-  { a:"STAR",   c:[["FISH","after"],["ROCK","before"],["SHOOTING","before"]] },
-  { a:"CAKE",   c:[["CUP","before"],["PAN","before"],["BIRTHDAY","before"]] },
-  { a:"HORSE",  c:[["SEA","before"],["SHOE","after"],["POWER","after"]] },
-  { a:"BOARD",  c:[["SKATE","before"],["KEY","before"],["SURF","before"]] },
-  { a:"HOUSE",  c:[["BIRD","before"],["GREEN","before"],["PLANT","after"]] },
-  { a:"POT",    c:[["JACK","before"],["TEA","before"],["HOLE","after"]] },
-  { a:"BOX",    c:[["SAND","before"],["MAIL","before"],["LUNCH","before"]] },
-  { a:"PAPER",  c:[["NEWS","before"],["WALL","before"],["CLIP","after"]] },
-  { a:"BED",    c:[["TIME","after"],["ROOM","after"],["FLOWER","before"]] },
-  { a:"MOON",   c:[["HONEY","before"],["FULL","before"],["WALK","after"]] },
-  { a:"WORK",   c:[["HOME","before"],["OUT","after"],["TEAM","before"]] },
-  { a:"FISH",   c:[["JELLY","before"],["GOLD","before"],["HOOK","after"]] },
-  { a:"HAND",   c:[["SHAKE","after"],["SECOND","before"],["BAG","after"]] },
-  { a:"EYE",    c:[["BROW","after"],["RED","before"],["LASH","after"]] },
-  { a:"HEAD",   c:[["ACHE","after"],["FORE","before"],["LINE","after"]] },
-  { a:"FOOT",   c:[["PRINT","after"],["BARE","before"],["BALL","after"]] },
-  { a:"NIGHT",  c:[["MARE","after"],["MID","before"],["OVER","before"]] },
-  { a:"TABLE",  c:[["SPOON","after"],["TIME","before"],["CLOTH","after"]] },
-  { a:"AIR",    c:[["PORT","after"],["PLANE","after"],["LINE","after"]] },
-  { a:"SIDE",   c:[["KICK","after"],["ROAD","before"],["WALK","after"]] },
-  { a:"LAND",   c:[["SLIDE","after"],["MARK","after"],["MAIN","before"]] },
-  { a:"WOOD",   c:[["DRIFT","before"],["PECKER","after"],["HOLLY","before"]] },
-  { a:"MILK",   c:[["SHAKE","after"],["BUTTER","before"],["COCONUT","before"]] },
-  { a:"STONE",  c:[["LIME","before"],["WALL","after"],["MILE","before"]] },
-  { a:"BREAD",  c:[["GINGER","before"],["CRUMB","after"],["SHORT","before"]] },
-  { a:"PLAY",   c:[["GROUND","after"],["HORSE","before"],["TIME","after"]] },
-  { a:"GRASS",  c:[["HOPPER","after"],["LEMON","before"],["SEA","before"]] },
-  { a:"SHIP",   c:[["FRIEND","before"],["WRECK","after"],["SPACE","before"]] },
-  { a:"RING",   c:[["EAR","before"],["TONE","after"],["BOXING","before"]] },
-  { a:"NUT",    c:[["PEA","before"],["DOUGH","before"],["COCO","before"]] }
+  { a:"CHEESE", d:"easy", c:[["STICK","after"],["GOAT","before"],["WHEEL","after"]] },
+  { a:"FIRE",   d:"easy", c:[["CAMP","before"],["WORKS","after"],["FLY","after"]] },
+  { a:"WATER",  d:"easy", c:[["FALL","after"],["SALT","before"],["MELON","after"]] },
+  { a:"SUN",    d:"easy", c:[["FLOWER","after"],["SCREEN","after"],["RISE","after"]] },
+  { a:"BOOK",   d:"easy", c:[["NOTE","before"],["WORM","after"],["SHELF","after"]] },
+  { a:"LIGHT",  d:"easy", c:[["FLASH","before"],["MOON","before"],["HOUSE","after"]] },
+  { a:"BALL",   d:"easy", c:[["BASKET","before"],["EYE","before"],["PARK","after"]] },
+  { a:"SNOW",   d:"easy", c:[["MAN","after"],["FLAKE","after"],["STORM","after"]] },
+  { a:"DOG",    d:"easy", c:[["HOT","before"],["WATCH","before"],["HOUSE","after"]] },
+  { a:"RAIN",   d:"easy", c:[["BOW","after"],["COAT","after"],["FOREST","after"]] },
+  { a:"STAR",   d:"easy", c:[["FISH","after"],["ROCK","before"],["SHOOTING","before"]] },
+  { a:"CAKE",   d:"easy", c:[["CUP","before"],["PAN","before"],["BIRTHDAY","before"]] },
+  { a:"HORSE",  d:"easy", c:[["SEA","before"],["SHOE","after"],["POWER","after"]] },
+  { a:"BOARD",  d:"easy", c:[["SKATE","before"],["KEY","before"],["SURF","before"]] },
+  { a:"HOUSE",  d:"easy", c:[["BIRD","before"],["GREEN","before"],["PLANT","after"]] },
+  { a:"BOX",    d:"easy", c:[["SAND","before"],["MAIL","before"],["LUNCH","before"]] },
+  { a:"PAPER",  d:"easy", c:[["NEWS","before"],["WALL","before"],["CLIP","after"]] },
+  { a:"BED",    d:"easy", c:[["TIME","after"],["ROOM","after"],["BUNK","before"]] },
+  { a:"MOON",   d:"easy", c:[["HONEY","before"],["FULL","before"],["WALK","after"]] },
+  { a:"FISH",   d:"easy", c:[["JELLY","before"],["GOLD","before"],["HOOK","after"]] },
+  { a:"BUG",    d:"easy", c:[["BED","before"],["LADY","before"],["LIGHTNING","before"]] },
+  { a:"CAR",    d:"easy", c:[["WASH","after"],["RACE","before"],["SEAT","after"]] },
+  { a:"TREE",   d:"easy", c:[["HOUSE","after"],["PALM","before"],["FAMILY","before"]] },
+  { a:"BEE",    d:"easy", c:[["HONEY","before"],["BUMBLE","before"],["SPELLING","before"]] },
+  { a:"MILK",   d:"easy", c:[["SHAKE","after"],["BUTTER","before"],["COCONUT","before"]] },
+  { a:"SHIP",   d:"easy", c:[["FRIEND","before"],["WRECK","after"],["SPACE","before"]] },
+  { a:"RING",   d:"easy", c:[["EAR","before"],["TONE","after"],["BOXING","before"]] },
+  { a:"NUT",    d:"easy", c:[["PEA","before"],["DOUGH","before"],["COCO","before"]] },
+  { a:"CORN",   d:"easy", c:[["POP","before"],["BREAD","after"],["CANDY","before"]] },
+  { a:"BERRY",  d:"easy", c:[["BLUE","before"],["STRAW","before"],["RASP","before"]] },
+  { a:"ROOM",   d:"easy", c:[["BATH","before"],["CLASS","before"],["MUSH","before"]] },
+  { a:"MAN",    d:"easy", c:[["SNOW","before"],["SUPER","before"],["HOLE","after"]] },
+  { a:"SHOE",   d:"easy", c:[["LACE","after"],["BOX","after"],["HORSE","before"]] },
+  { a:"POP",    d:"easy", c:[["CORN","after"],["SODA","before"],["QUIZ","after"]] },
+  { a:"BATH",   d:"easy", c:[["TUB","after"],["ROBE","after"],["BUBBLE","before"]] },
+  { a:"NIGHT",  d:"easy", c:[["MARE","after"],["MID","before"],["OVER","before"]] },
+  { a:"TOOTH",  d:"easy", c:[["BRUSH","after"],["PASTE","after"],["SWEET","before"]] },
+  { a:"HAIR",   d:"easy", c:[["CUT","after"],["DRYER","after"],["STYLE","after"]] },
+  { a:"DOOR",   d:"easy", c:[["BELL","after"],["KNOB","after"],["FRONT","before"]] },
+  { a:"APPLE",  d:"easy", c:[["SAUCE","after"],["PIE","after"],["PINE","before"]] },
+
+  { a:"POT",    d:"medium", c:[["JACK","before"],["TEA","before"],["HOLE","after"]] },
+  { a:"HAND",   d:"medium", c:[["SHAKE","after"],["SECOND","before"],["BAG","after"]] },
+  { a:"EYE",    d:"medium", c:[["BROW","after"],["RED","before"],["LASH","after"]] },
+  { a:"HEAD",   d:"medium", c:[["ACHE","after"],["FORE","before"],["LINE","after"]] },
+  { a:"FOOT",   d:"medium", c:[["PRINT","after"],["STEP","after"],["BALL","after"]] },
+  { a:"TABLE",  d:"medium", c:[["SPOON","after"],["TIME","before"],["CLOTH","after"]] },
+  { a:"AIR",    d:"medium", c:[["PORT","after"],["PLANE","after"],["TIGHT","after"]] },
+  { a:"SIDE",   d:"medium", c:[["KICK","after"],["ROAD","before"],["WALK","after"]] },
+  { a:"LAND",   d:"medium", c:[["SLIDE","after"],["MARK","after"],["MAIN","before"]] },
+  { a:"WOOD",   d:"medium", c:[["DRIFT","before"],["PECKER","after"],["HOLLY","before"]] },
+  { a:"STONE",  d:"medium", c:[["LIME","before"],["WALL","after"],["MILE","before"]] },
+  { a:"BREAD",  d:"medium", c:[["GINGER","before"],["CRUMB","after"],["SHORT","before"]] },
+  { a:"PLAY",   d:"medium", c:[["GROUND","after"],["HORSE","before"],["TIME","after"]] },
+  { a:"GRASS",  d:"medium", c:[["HOPPER","after"],["LEMON","before"],["CRAB","before"]] },
+  { a:"WORK",   d:"medium", c:[["HOME","before"],["OUT","after"],["TEAM","before"]] },
+  { a:"LINE",   d:"medium", c:[["CLOTHES","before"],["PUNCH","before"],["FINISH","before"]] },
+  { a:"WATCH",  d:"medium", c:[["WRIST","before"],["TOWER","after"],["STOP","before"]] },
+  { a:"WALK",   d:"medium", c:[["BOARD","before"],["JAY","before"],["MOON","before"]] },
+  { a:"STORM",  d:"medium", c:[["BRAIN","before"],["THUNDER","before"],["CLOUD","after"]] },
+  { a:"PACK",   d:"medium", c:[["BACK","before"],["RAT","after"],["SIX","before"]] },
+  { a:"YARD",   d:"medium", c:[["BACK","before"],["STICK","after"],["COURT","before"]] },
+  { a:"GROUND", d:"medium", c:[["UNDER","before"],["CAMP","before"],["HOG","after"]] },
+  { a:"LOCK",   d:"medium", c:[["SMITH","after"],["PAD","before"],["DOWN","after"]] },
+  { a:"BOW",    d:"medium", c:[["RAIN","before"],["TIE","after"],["CROSS","before"]] },
+  { a:"WORM",   d:"medium", c:[["EARTH","before"],["SILK","before"],["TAPE","before"]] },
+  { a:"SEAT",   d:"medium", c:[["BELT","after"],["BACK","before"],["WINDOW","before"]] },
+  { a:"GLASS",  d:"medium", c:[["HOUR","before"],["WINE","before"],["MAGNIFYING","before"]] },
+  { a:"COAT",   d:"medium", c:[["OVER","before"],["TURN","before"],["HANGER","after"]] },
+  { a:"PRINT",  d:"medium", c:[["FINGER","before"],["BLUE","before"],["NEWS","before"]] },
+  { a:"BONE",   d:"medium", c:[["FUNNY","before"],["WISH","before"],["JAW","before"]] },
+  { a:"TAIL",   d:"medium", c:[["GATE","after"],["PONY","before"],["SPIN","after"]] },
+  { a:"CHAIR",  d:"medium", c:[["ARM","before"],["HIGH","before"],["WHEEL","before"]] },
+  { a:"STICK",  d:"medium", c:[["CHOP","before"],["LIP","before"],["DRUM","before"]] },
+  { a:"PIT",    d:"medium", c:[["FIRE","before"],["STOP","after"],["BULL","after"]] },
+  { a:"SAND",   d:"medium", c:[["CASTLE","after"],["PAPER","after"],["QUICK","before"]] },
+  { a:"GUARD",  d:"medium", c:[["BODY","before"],["LIFE","before"],["RAIL","after"]] },
+  { a:"PROOF",  d:"medium", c:[["BULLET","before"],["FOOL","before"],["WATER","before"]] },
+  { a:"BRUSH",  d:"medium", c:[["PAINT","before"],["HAIR","before"],["FIRE","after"]] },
+  { a:"SHELL",  d:"medium", c:[["SEA","before"],["EGG","before"],["NUT","before"]] },
+  { a:"WIND",   d:"medium", c:[["MILL","after"],["SHIELD","after"],["WHIRL","before"]] },
+
+  { a:"BREAK",  d:"hard", c:[["FAST","after"],["DAY","before"],["OUT","before"]] },
+  { a:"CHECK",  d:"hard", c:[["MATE","after"],["RAIN","before"],["PAY","before"]] },
+  { a:"DOUBLE", d:"hard", c:[["CROSS","after"],["TAKE","after"],["BODY","before"]] },
+  { a:"COLD",   d:"hard", c:[["SHOULDER","after"],["FRONT","after"],["TURKEY","after"]] },
+  { a:"FREE",   d:"hard", c:[["CARE","before"],["FALL","after"],["STYLE","after"]] },
+  { a:"JACK",   d:"hard", c:[["POT","after"],["LUMBER","before"],["FLAP","before"]] },
+  { a:"POCKET", d:"hard", c:[["KNIFE","after"],["PICK","before"],["BOOK","after"]] },
+  { a:"PITCH",  d:"hard", c:[["FORK","after"],["SALES","before"],["BLACK","after"]] },
+  { a:"SPELL",  d:"hard", c:[["BOUND","after"],["CHECK","after"],["DRY","before"]] },
+  { a:"DRAW",   d:"hard", c:[["BRIDGE","after"],["BACK","after"],["WITH","before"]] },
+  { a:"CROSS",  d:"hard", c:[["WORD","after"],["ROADS","after"],["MOTO","before"]] },
+  { a:"SHOT",   d:"hard", c:[["MUG","before"],["LONG","before"],["SLING","before"]] },
+  { a:"TRAP",   d:"hard", c:[["MOUSE","before"],["DOOR","after"],["TOURIST","before"]] },
+  { a:"RUN",    d:"hard", c:[["HOME","before"],["WAY","after"],["OFF","after"]] },
+  { a:"MARK",   d:"hard", c:[["TRADE","before"],["BENCH","before"],["QUESTION","before"]] },
+  { a:"WISE",   d:"hard", c:[["CLOCK","before"],["CRACK","after"],["STREET","before"]] },
+  { a:"STAND",  d:"hard", c:[["GRAND","before"],["NEWS","before"],["STILL","after"]] },
+  { a:"TALK",   d:"hard", c:[["SMALL","before"],["PEP","before"],["SHOW","after"]] },
+  { a:"LIFE",   d:"hard", c:[["WILD","before"],["NIGHT","before"],["SHELF","before"]] },
+  { a:"TIME",   d:"hard", c:[["LIFE","before"],["OVER","before"],["ZONE","after"]] },
+  { a:"POINT",  d:"hard", c:[["PIN","before"],["BLANK","after"],["VIEW","before"]] },
+  { a:"CUT",    d:"hard", c:[["SHORT","before"],["BACK","after"],["PAPER","before"]] },
+  { a:"TRACK",  d:"hard", c:[["SUIT","after"],["SOUND","before"],["SIDE","before"]] },
+  { a:"WHEEL",  d:"hard", c:[["BARROW","after"],["FERRIS","before"],["CART","before"]] },
+  { a:"NECK",   d:"hard", c:[["BOTTLE","before"],["TURTLE","before"],["LACE","after"]] },
+  { a:"SLIP",   d:"hard", c:[["KNOT","after"],["PINK","before"],["COVER","after"]] },
+  { a:"SPIN",   d:"hard", c:[["OFF","after"],["TAIL","before"],["CYCLE","after"]] },
+  { a:"STRING", d:"hard", c:[["SHOE","before"],["BEAN","after"],["HAM","before"]] },
+  { a:"BELT",   d:"hard", c:[["CONVEYOR","before"],["BLACK","before"],["SEAT","before"]] },
+  { a:"CHIP",   d:"hard", c:[["MUNK","after"],["POKER","before"],["BLUE","before"]] },
+  { a:"DRESS",  d:"hard", c:[["SUN","before"],["HEAD","before"],["REHEARSAL","after"]] },
+  { a:"MATCH",  d:"hard", c:[["BOX","after"],["MAKER","after"],["TENNIS","before"]] },
+  { a:"PICK",   d:"hard", c:[["TOOTH","before"],["NIT","before"],["ICE","before"]] },
+  { a:"PLANT",  d:"hard", c:[["POWER","before"],["EGG","before"],["HOUSE","before"]] },
+  { a:"SCREEN", d:"hard", c:[["SAVER","after"],["SMOKE","before"],["TOUCH","before"]] },
+  { a:"WASH",   d:"hard", c:[["BRAIN","before"],["CLOTH","after"],["MOUTH","before"]] },
+  { a:"TIP",    d:"hard", c:[["TOE","after"],["FINGER","before"],["OFF","after"]] },
+  { a:"HORN",   d:"hard", c:[["FOG","before"],["LONG","before"],["SHOE","before"]] },
+  { a:"WEIGHT", d:"hard", c:[["PAPER","before"],["HEAVY","before"],["LIFTING","after"]] },
+  { a:"FALL",   d:"hard", c:[["NIGHT","before"],["PIT","before"],["OUT","after"]] }
 ];
 
-var STORE_KEY = "commonthread-v1";
+var TIER_ORDER = ["easy", "medium", "hard"];
+var TIER_LABEL = { easy:"Easy edition", medium:"Medium edition", hard:"Hard edition" };
+var BANK = { easy:[], medium:[], hard:[] };
+PUZZLES.forEach(function(p){ BANK[p.d].push(p); });
+
+var FIRST_HINT_COST = 2, EXTRA_HINT_COST = 3, SOLVE_POINTS = 10, MIN_POINTS = 2;
+
+var STORE_KEY = "commonthread-v2";
 
 function loadState(){
   try{
     var s = JSON.parse(localStorage.getItem(STORE_KEY));
-    if (s && typeof s.idx === "number") return s;
+    if (s && s.idx && TIER_ORDER.indexOf(s.tier) !== -1) return s;
   }catch(e){}
-  return { idx:0, score:0, streak:0, solved:0 };
+  return { tier:"easy", idx:{easy:0, medium:0, hard:0}, score:0, streak:0, solved:0 };
 }
 function saveState(){
   try{ localStorage.setItem(STORE_KEY, JSON.stringify(state)); }catch(e){}
@@ -368,32 +498,59 @@ var state = loadState();
 
 var guess = [];        // player letters, null = empty
 var locked = [];       // true where a hint revealed the letter
-var solvedNow = false;
-var hintsUsed = 0;
+var over = false;      // solved or revealed — puzzle finished
+var hintCost = 0;      // points spent on hints this puzzle
+var startedAt = 0;     // timer start for this puzzle
+var clockTimer = null;
 
 var $ = function(id){ return document.getElementById(id); };
 var cluesEl = $("clues"), answerEl = $("answer"), msgEl = $("message");
-var hintBtn = $("hintBtn"), skipBtn = $("skipBtn"), nextBtn = $("nextBtn");
+var hintBtn = $("hintBtn"), revealBtn = $("revealBtn"),
+    skipBtn = $("skipBtn"), nextBtn = $("nextBtn");
 
-function puzzle(){ return PUZZLES[state.idx]; }
+function bank(){ return BANK[state.tier]; }
+function puzzle(){ return bank()[state.idx[state.tier]]; }
+function tierDone(){ return state.idx[state.tier] >= bank().length; }
+
+function fmtTime(ms){
+  var s = Math.floor(ms / 1000);
+  return Math.floor(s / 60) + ":" + String(s % 60).padStart(2, "0");
+}
+function stopClock(){ if (clockTimer){ clearInterval(clockTimer); clockTimer = null; } }
+function startClock(){
+  stopClock();
+  startedAt = Date.now();
+  $("clock").textContent = "0:00";
+  clockTimer = setInterval(function(){
+    $("clock").textContent = fmtTime(Date.now() - startedAt);
+  }, 500);
+}
 
 function renderHUD(){
-  $("pnum").textContent = state.idx + 1;
-  $("ptotal").textContent = PUZZLES.length;
+  $("tiername").textContent = TIER_LABEL[state.tier];
+  $("pnum").textContent = Math.min(state.idx[state.tier] + 1, bank().length);
+  $("ptotal").textContent = bank().length;
   $("score").textContent = state.score;
   $("streak").textContent = state.streak;
   $("solvedCount").textContent = state.solved;
   document.querySelector(".streak-wrap").classList.toggle("streak-on", state.streak >= 3);
+  document.querySelectorAll(".tab").forEach(function(tab){
+    var t = tab.dataset.tier;
+    tab.classList.toggle("active", t === state.tier);
+    tab.setAttribute("aria-selected", t === state.tier);
+    tab.innerHTML = t.charAt(0).toUpperCase() + t.slice(1) +
+      (state.idx[t] >= BANK[t].length ? ' <span class="done-mark">&#10003;</span>' : "");
+  });
 }
 
-function renderClues(showAnswer){
+function renderClues(mode){ // mode: "play" | "solved" | "given"
   cluesEl.innerHTML = "";
   puzzle().c.forEach(function(pair){
     var row = document.createElement("div");
-    row.className = "clue" + (showAnswer ? " solved" : "");
+    row.className = "clue" + (mode === "solved" ? " solved" : mode === "given" ? " given" : "");
     var slot = document.createElement("span");
     slot.className = "slot";
-    slot.textContent = showAnswer ? puzzle().a : "+";
+    slot.textContent = mode === "play" ? "+" : puzzle().a;
     var word = document.createElement("span");
     word.className = "word";
     word.textContent = pair[0];
@@ -420,20 +577,30 @@ function setMessage(text, kind){
   msgEl.className = kind || "";
 }
 
+function updateHintBtn(){
+  var unrevealed = locked.filter(function(x){ return !x; }).length;
+  hintBtn.disabled = unrevealed <= 1;
+  hintBtn.innerHTML = "Hint&nbsp;&minus;" + (hintCost === 0 ? FIRST_HINT_COST : EXTRA_HINT_COST);
+}
+
 function startPuzzle(){
+  if (tierDone()){ showDone(); return; }
+  $("done").classList.remove("show");
   var a = puzzle().a;
   guess = new Array(a.length).fill(null);
   locked = new Array(a.length).fill(false);
-  solvedNow = false;
-  hintsUsed = 0;
+  over = false;
+  hintCost = 0;
   nextBtn.style.display = "none";
   hintBtn.style.display = "";
+  revealBtn.style.display = "";
   skipBtn.style.display = "";
-  hintBtn.disabled = false;
   setMessage("");
   renderHUD();
-  renderClues(false);
+  renderClues("play");
   renderAnswer();
+  updateHintBtn();
+  startClock();
 }
 
 function firstEmpty(){
@@ -448,14 +615,14 @@ function lastFilled(){
 }
 
 function typeLetter(ch){
-  if (solvedNow) return;
+  if (over) return;
   var i = firstEmpty();
   if (i === -1) return;
   guess[i] = ch;
   renderAnswer();
 }
 function backspace(){
-  if (solvedNow) return;
+  if (over) return;
   var i = lastFilled();
   if (i === -1) return;
   guess[i] = null;
@@ -474,7 +641,7 @@ function currentWord(){
 }
 
 function check(){
-  if (solvedNow) return;
+  if (over) return;
   var w = currentWord();
   if (!w){ setMessage("Fill in every letter first.", "err"); return; }
   if (w === puzzle().a){ win(); }
@@ -488,12 +655,23 @@ function check(){
   }
 }
 
+function endPuzzle(){
+  over = true;
+  stopClock();
+  hintBtn.style.display = "none";
+  revealBtn.style.display = "none";
+  skipBtn.style.display = "none";
+  nextBtn.style.display = "";
+  nextBtn.textContent = (state.idx[state.tier] + 1 < bank().length) ? "Next →" : "Finish edition";
+}
+
 function win(){
-  solvedNow = true;
-  state.score += Math.max(10 - 3 * hintsUsed, 2);
+  var elapsed = fmtTime(Date.now() - startedAt);
+  state.score += Math.max(SOLVE_POINTS - hintCost, MIN_POINTS);
   state.streak += 1;
   state.solved += 1;
   saveState();
+  endPuzzle();
   renderHUD();
   var tiles = answerEl.children;
   var a = puzzle().a;
@@ -506,12 +684,8 @@ function win(){
       }, d);
     })(tiles[i], a[i], i * 90);
   }
-  setTimeout(function(){ renderClues(true); }, a.length * 90 + 200);
-  setMessage(praise(), "win");
-  hintBtn.style.display = "none";
-  skipBtn.style.display = "none";
-  nextBtn.style.display = "";
-  nextBtn.textContent = (state.idx + 1 < PUZZLES.length) ? "Next →" : "Finish";
+  setTimeout(function(){ renderClues("solved"); }, a.length * 90 + 200);
+  setMessage(praise() + " Solved in " + elapsed + ".", "win");
 }
 
 function praise(){
@@ -519,46 +693,73 @@ function praise(){
   return lines[state.solved % lines.length];
 }
 
+function reveal(){
+  if (over) return;
+  state.streak = 0;
+  saveState();
+  endPuzzle();
+  renderHUD();
+  var tiles = answerEl.children;
+  var a = puzzle().a;
+  for (var i = 0; i < tiles.length; i++){
+    tiles[i].className = "tile filled given";
+    tiles[i].textContent = a[i];
+  }
+  renderClues("given");
+  setMessage("It was " + a + " — no points this round.", "err");
+}
+
 function hint(){
-  if (solvedNow) return;
+  if (over) return;
   var a = puzzle().a;
   var spots = [];
   for (var i = 0; i < a.length; i++) if (!locked[i]) spots.push(i);
-  if (spots.length <= 1){ hintBtn.disabled = true; return; }
-  var i = spots[0];
-  locked[i] = true;
-  guess[i] = null;
-  hintsUsed += 1;
-  state.score = Math.max(0, state.score - 3);
-  saveState();
-  renderHUD();
+  if (spots.length <= 1) return;
+  /* First hint anchors the word with its first letter; later hints
+     reveal a random remaining letter so repeat hints stay interesting. */
+  var pick = hintCost === 0 && !locked[0]
+    ? 0
+    : spots[Math.floor(Math.random() * spots.length)];
+  hintCost += (hintCost === 0 ? FIRST_HINT_COST : EXTRA_HINT_COST);
+  locked[pick] = true;
+  guess[pick] = null;
   renderAnswer();
-  var left = 0;
-  for (var j = 0; j < a.length; j++) if (!locked[j]) left++;
-  if (left <= 1) hintBtn.disabled = true;
+  updateHintBtn();
 }
 
 function advance(){
-  if (state.idx + 1 >= PUZZLES.length){
-    $("doneStats").textContent = "Final score: " + state.score + " · " + state.solved + " solved";
-    $("done").classList.add("show");
-    return;
-  }
-  state.idx += 1;
+  state.idx[state.tier] += 1;
   saveState();
-  startPuzzle();
+  if (tierDone()){ showDone(); } else { startPuzzle(); }
 }
 
 function skip(){
   state.streak = 0;
   saveState();
-  if (state.idx + 1 >= PUZZLES.length){
-    state.idx = 0;
-    saveState();
-    startPuzzle();
-    return;
-  }
+  stopClock();
   advance();
+}
+
+function showDone(){
+  stopClock();
+  renderHUD();
+  var t = state.tier;
+  $("doneTitle").textContent = "Extra! Extra!";
+  $("doneStats").textContent = TIER_LABEL[t] + " complete · Score " + state.score + " · " + state.solved + " solved";
+  var nextTier = TIER_ORDER[TIER_ORDER.indexOf(t) + 1];
+  $("doneNote").textContent = nextTier
+    ? "Ready for the " + nextTier + " edition, or replay this one?"
+    : "You finished the hardest edition. Replay any tier from the tabs above.";
+  $("nextTierBtn").style.display = nextTier ? "" : "none";
+  $("replayBtn").textContent = "Replay " + t;
+  $("done").classList.add("show");
+}
+
+function setTier(t){
+  state.tier = t;
+  saveState();
+  $("done").classList.remove("show");
+  startPuzzle();
 }
 
 /* ---------- keyboard ---------- */
@@ -590,22 +791,32 @@ function makeKey(label, cls, fn, aria){
 
 document.addEventListener("keydown", function(e){
   if (e.metaKey || e.ctrlKey || e.altKey) return;
-  if (e.key === "Enter"){ solvedNow ? advance() : check(); }
-  else if (e.key === "Backspace"){ backspace(); }
+  if ($("done").classList.contains("show")) return;
+  /* preventDefault so Enter doesn't also re-activate whichever button
+     still holds focus (e.g. a tier tab clicked moments earlier). */
+  if (e.key === "Enter"){ e.preventDefault(); over ? advance() : check(); }
+  else if (e.key === "Backspace"){ e.preventDefault(); backspace(); }
   else if (/^[a-zA-Z]$/.test(e.key)){ typeLetter(e.key.toUpperCase()); }
 });
 
 hintBtn.addEventListener("click", hint);
+revealBtn.addEventListener("click", reveal);
 skipBtn.addEventListener("click", skip);
 nextBtn.addEventListener("click", advance);
-$("resetBtn").addEventListener("click", function(){
-  state = { idx:0, score:0, streak:0, solved:0 };
+$("replayBtn").addEventListener("click", function(){
+  state.idx[state.tier] = 0;
   saveState();
   $("done").classList.remove("show");
   startPuzzle();
 });
+$("nextTierBtn").addEventListener("click", function(){
+  var next = TIER_ORDER[TIER_ORDER.indexOf(state.tier) + 1];
+  if (next) setTier(next);
+});
+document.querySelectorAll(".tab").forEach(function(tab){
+  tab.addEventListener("click", function(){ setTier(tab.dataset.tier); });
+});
 
-if (state.idx >= PUZZLES.length) state.idx = 0;
 startPuzzle();
 })();
 </script>
