@@ -308,7 +308,6 @@
   </div>
 
   <div class="strip">
-    <span>Score <b id="score">0</b></span>
     <span class="streak-wrap">Streak <b id="streak">0</b></span>
     <span>Solved <b id="solvedCount">0</b></span>
     <span>Time <b id="clock">0:00</b></span>
@@ -320,7 +319,7 @@
     <div id="answer" aria-label="Your answer"></div>
     <div id="message" role="status"></div>
     <div class="actions">
-      <button class="btn hint" id="hintBtn">Hint&nbsp;&minus;2</button>
+      <button class="btn hint" id="hintBtn">Hint&nbsp;+0:30</button>
       <button class="btn reveal" id="revealBtn">Reveal</button>
       <button class="btn" id="skipBtn">Skip</button>
       <button class="btn primary" id="nextBtn" style="display:none">Next&nbsp;&rarr;</button>
@@ -479,16 +478,19 @@ var TIER_LABEL = { easy:"Easy edition", medium:"Medium edition", hard:"Hard edit
 var BANK = { easy:[], medium:[], hard:[] };
 PUZZLES.forEach(function(p){ BANK[p.d].push(p); });
 
-var FIRST_HINT_COST = 2, EXTRA_HINT_COST = 3, SOLVE_POINTS = 10, MIN_POINTS = 2;
+/* Seconds added to a puzzle's solve time for the 1st, 2nd, 3rd hint. Any
+   hint beyond the third keeps the last (largest) penalty. */
+var HINT_PENALTIES = [30, 45, 60];
 
-var STORE_KEY = "commonthread-v2";
+var STORE_KEY = "commonthread-v3";
 
 function loadState(){
   try{
     var s = JSON.parse(localStorage.getItem(STORE_KEY));
-    if (s && s.idx && TIER_ORDER.indexOf(s.tier) !== -1) return s;
+    if (s && s.idx && s.tierTime && TIER_ORDER.indexOf(s.tier) !== -1) return s;
   }catch(e){}
-  return { tier:"easy", idx:{easy:0, medium:0, hard:0}, score:0, streak:0, solved:0 };
+  return { tier:"easy", idx:{easy:0, medium:0, hard:0}, streak:0, solved:0,
+           tierTime:{easy:0, medium:0, hard:0} };
 }
 function saveState(){
   try{ localStorage.setItem(STORE_KEY, JSON.stringify(state)); }catch(e){}
@@ -499,7 +501,8 @@ var state = loadState();
 var guess = [];        // player letters, null = empty
 var locked = [];       // true where a hint revealed the letter
 var over = false;      // solved or revealed — puzzle finished
-var hintCost = 0;      // points spent on hints this puzzle
+var hintsUsed = 0;     // hints taken this puzzle
+var penaltyMs = 0;     // time penalty (ms) added by hints this puzzle
 var startedAt = 0;     // timer start for this puzzle
 var clockTimer = null;
 
@@ -516,13 +519,14 @@ function fmtTime(ms){
   var s = Math.floor(ms / 1000);
   return Math.floor(s / 60) + ":" + String(s % 60).padStart(2, "0");
 }
+function elapsedMs(){ return (Date.now() - startedAt) + penaltyMs; }
 function stopClock(){ if (clockTimer){ clearInterval(clockTimer); clockTimer = null; } }
 function startClock(){
   stopClock();
   startedAt = Date.now();
   $("clock").textContent = "0:00";
   clockTimer = setInterval(function(){
-    $("clock").textContent = fmtTime(Date.now() - startedAt);
+    $("clock").textContent = fmtTime(elapsedMs());
   }, 500);
 }
 
@@ -530,7 +534,6 @@ function renderHUD(){
   $("tiername").textContent = TIER_LABEL[state.tier];
   $("pnum").textContent = Math.min(state.idx[state.tier] + 1, bank().length);
   $("ptotal").textContent = bank().length;
-  $("score").textContent = state.score;
   $("streak").textContent = state.streak;
   $("solvedCount").textContent = state.solved;
   document.querySelector(".streak-wrap").classList.toggle("streak-on", state.streak >= 3);
@@ -577,10 +580,13 @@ function setMessage(text, kind){
   msgEl.className = kind || "";
 }
 
+function nextPenaltySec(){
+  return HINT_PENALTIES[Math.min(hintsUsed, HINT_PENALTIES.length - 1)];
+}
 function updateHintBtn(){
   var unrevealed = locked.filter(function(x){ return !x; }).length;
   hintBtn.disabled = unrevealed <= 1;
-  hintBtn.innerHTML = "Hint&nbsp;&minus;" + (hintCost === 0 ? FIRST_HINT_COST : EXTRA_HINT_COST);
+  hintBtn.innerHTML = "Hint&nbsp;+" + fmtTime(nextPenaltySec() * 1000);
 }
 
 function startPuzzle(){
@@ -590,7 +596,8 @@ function startPuzzle(){
   guess = new Array(a.length).fill(null);
   locked = new Array(a.length).fill(false);
   over = false;
-  hintCost = 0;
+  hintsUsed = 0;
+  penaltyMs = 0;
   nextBtn.style.display = "none";
   hintBtn.style.display = "";
   revealBtn.style.display = "";
@@ -666,10 +673,10 @@ function endPuzzle(){
 }
 
 function win(){
-  var elapsed = fmtTime(Date.now() - startedAt);
-  state.score += Math.max(SOLVE_POINTS - hintCost, MIN_POINTS);
+  var solveMs = elapsedMs();
   state.streak += 1;
   state.solved += 1;
+  state.tierTime[state.tier] += solveMs;
   saveState();
   endPuzzle();
   renderHUD();
@@ -685,7 +692,8 @@ function win(){
     })(tiles[i], a[i], i * 90);
   }
   setTimeout(function(){ renderClues("solved"); }, a.length * 90 + 200);
-  setMessage(praise() + " Solved in " + elapsed + ".", "win");
+  var note = penaltyMs ? " (incl. " + fmtTime(penaltyMs) + " hint penalty)" : "";
+  setMessage(praise() + " Solved in " + fmtTime(solveMs) + note + ".", "win");
 }
 
 function praise(){
@@ -706,7 +714,7 @@ function reveal(){
     tiles[i].textContent = a[i];
   }
   renderClues("given");
-  setMessage("It was " + a + " — no points this round.", "err");
+  setMessage("The thread was " + a + " — streak reset.", "err");
 }
 
 function hint(){
@@ -716,13 +724,17 @@ function hint(){
   for (var i = 0; i < a.length; i++) if (!locked[i]) spots.push(i);
   if (spots.length <= 1) return;
   /* First hint anchors the word with its first letter; later hints
-     reveal a random remaining letter so repeat hints stay interesting. */
-  var pick = hintCost === 0 && !locked[0]
+     reveal a random remaining letter so repeat hints stay interesting.
+     Each hint adds a time penalty (streak is untouched — only a wrong
+     guess breaks a streak). */
+  var pick = hintsUsed === 0 && !locked[0]
     ? 0
     : spots[Math.floor(Math.random() * spots.length)];
-  hintCost += (hintCost === 0 ? FIRST_HINT_COST : EXTRA_HINT_COST);
+  penaltyMs += nextPenaltySec() * 1000;
+  hintsUsed += 1;
   locked[pick] = true;
   guess[pick] = null;
+  $("clock").textContent = fmtTime(elapsedMs());
   renderAnswer();
   updateHintBtn();
 }
@@ -745,7 +757,7 @@ function showDone(){
   renderHUD();
   var t = state.tier;
   $("doneTitle").textContent = "Extra! Extra!";
-  $("doneStats").textContent = TIER_LABEL[t] + " complete · Score " + state.score + " · " + state.solved + " solved";
+  $("doneStats").textContent = TIER_LABEL[t] + " complete · Total time " + fmtTime(state.tierTime[t]);
   var nextTier = TIER_ORDER[TIER_ORDER.indexOf(t) + 1];
   $("doneNote").textContent = nextTier
     ? "Ready for the " + nextTier + " edition, or replay this one?"
@@ -805,6 +817,7 @@ skipBtn.addEventListener("click", skip);
 nextBtn.addEventListener("click", advance);
 $("replayBtn").addEventListener("click", function(){
   state.idx[state.tier] = 0;
+  state.tierTime[state.tier] = 0;
   saveState();
   $("done").classList.remove("show");
   startPuzzle();
