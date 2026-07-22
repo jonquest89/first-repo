@@ -23,6 +23,10 @@
     --key-ink:#1C2033;
     --key-border:#C9C7BC;
     --shadow:0 1px 2px rgba(28,32,51,.10);
+    /* difficulty colours (traffic-light, drawn from the existing palette) */
+    --easy:#2F7D4F;   --easy-soft:#E3EEE7;
+    --medium:#B8830D; --medium-soft:#F3E8CC;
+    --hard:#B23A3A;   --hard-soft:#F1DEDE;
   }
   @media (prefers-color-scheme: dark){
     :root{
@@ -43,6 +47,9 @@
       --key-ink:#ECEAE2;
       --key-border:#3B4058;
       --shadow:0 1px 2px rgba(0,0,0,.35);
+      --easy:#57BC83;   --easy-soft:#1C2A22;
+      --medium:#E3B84A; --medium-soft:#2F2814;
+      --hard:#E88484;   --hard-soft:#2F1D1D;
     }
   }
   :root[data-theme="light"]{
@@ -51,6 +58,8 @@
     --gold-soft:#F3E4BC; --green:#2F7D4F; --green-ink:#FDFCF8; --red:#B23A3A;
     --tile-empty:#E9E7DE; --key:#FDFCF8; --key-ink:#1C2033; --key-border:#C9C7BC;
     --shadow:0 1px 2px rgba(28,32,51,.10);
+    --easy:#2F7D4F; --easy-soft:#E3EEE7; --medium:#B8830D; --medium-soft:#F3E8CC;
+    --hard:#B23A3A; --hard-soft:#F1DEDE;
   }
   :root[data-theme="dark"]{
     --paper:#14161F; --paper-raised:#1E2130; --ink:#ECEAE2; --ink-soft:#9A9DB0;
@@ -58,7 +67,14 @@
     --gold-soft:#3A3320; --green:#4CAE78; --green-ink:#14161F; --red:#E07A7A;
     --tile-empty:#262A3B; --key:#2A2E42; --key-ink:#ECEAE2; --key-border:#3B4058;
     --shadow:0 1px 2px rgba(0,0,0,.35);
+    --easy:#57BC83; --easy-soft:#1C2A22; --medium:#E3B84A; --medium-soft:#2F2814;
+    --hard:#E88484; --hard-soft:#2F1D1D;
   }
+
+  /* per-tier: expose one --tier / --tier-soft that children inherit */
+  [data-tier="easy"]{   --tier:var(--easy);   --tier-soft:var(--easy-soft); }
+  [data-tier="medium"]{ --tier:var(--medium); --tier-soft:var(--medium-soft); }
+  [data-tier="hard"]{   --tier:var(--hard);   --tier-soft:var(--hard-soft); }
 
   *{ box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
   html,body{ height:100%; }
@@ -74,10 +90,11 @@
   }
   #app{
     width:100%; max-width:480px;
-    min-height:100dvh; max-height:100dvh;
+    height:100dvh;
     display:flex; flex-direction:column;
     padding:calc(env(safe-area-inset-top, 0px) + 10px) 14px calc(env(safe-area-inset-bottom, 0px) + 10px);
   }
+  .hidden{ display:none !important; }
 
   /* ---------- Masthead ---------- */
   header{
@@ -104,30 +121,98 @@
   }
   .dateline > span + span::before{ content:"·"; margin-right:10px; color:var(--rule); }
 
-  /* ---------- Tier tabs ---------- */
-  .tiers{
-    display:flex; justify-content:center; gap:6px;
-    padding:8px 0 2px;
-    flex:0 0 auto;
+  /* ================= PATH SCREEN ================= */
+  #pathScreen{
+    flex:1 1 auto; min-height:0;
+    overflow-y:auto;
+    display:flex; flex-direction:column; gap:10px;
+    padding:12px 2px 4px;
   }
-  .tab{
+  .path-intro{
+    text-align:center; margin:0 0 2px;
+    font-family:"Iowan Old Style", Palatino, Georgia, serif;
+    font-style:italic; color:var(--ink-soft); font-size:14px;
+  }
+  .tier-group{
+    background:var(--paper-raised);
+    border:1px solid var(--rule);
+    border-left:4px solid var(--tier);
+    border-radius:8px;
+    box-shadow:var(--shadow);
+    padding:12px 14px 14px;
+  }
+  .tier-head{ display:flex; align-items:center; gap:10px; }
+  .tier-tag{
+    background:var(--tier); color:#fff;
+    padding:3px 12px; border-radius:999px;
+    font-size:11px; font-weight:800; letter-spacing:.12em; text-transform:uppercase;
+  }
+  .tier-meta{ font-size:11px; color:var(--ink-soft); letter-spacing:.04em;
+    font-variant-numeric:tabular-nums; margin-left:auto; }
+  .path{
+    position:relative;
+    display:flex; justify-content:space-between;
+    padding:14px 8px 2px;
+  }
+  .path::before{ /* the connecting thread */
+    content:""; position:absolute;
+    left:14%; right:14%; top:38px; height:0;
+    border-top:2px dashed var(--tier); opacity:.45;
+  }
+  .stone-wrap{
+    position:relative; z-index:1;
+    display:flex; flex-direction:column; align-items:center; gap:6px;
+    width:24%;
+  }
+  .stone{
     appearance:none; cursor:pointer;
-    background:none; border:1px solid var(--rule);
-    color:var(--ink-soft);
-    border-radius:999px;
-    padding:5px 14px;
-    font-size:11px; font-weight:700;
-    letter-spacing:.1em; text-transform:uppercase;
+    width:48px; height:48px; border-radius:50%;
+    border:2px solid var(--tier); background:var(--paper-raised);
+    color:var(--tier);
+    font-size:16px; font-weight:800;
+    display:flex; align-items:center; justify-content:center;
+    box-shadow:var(--shadow);
+    transition:transform .1s;
   }
-  .tab.active{
-    background:var(--accent); border-color:var(--accent);
-    color:var(--accent-ink);
-  }
-  .tab .done-mark{ color:var(--gold); }
-  .tab.active .done-mark{ color:var(--accent-ink); }
-  .tab:focus-visible{ outline:2px solid var(--accent); outline-offset:2px; }
+  .stone .check{ font-size:20px; line-height:1; }
+  .stone.done{ background:var(--tier); color:#fff; border-color:var(--tier); }
+  .stone:active{ transform:translateY(1px) scale(.97); }
+  .stone:focus-visible{ outline:2px solid var(--tier); outline-offset:3px; }
+  .stone-label{ font-size:9px; letter-spacing:.08em; text-transform:uppercase; color:var(--ink-soft); }
+  .stone-time{ font-size:11px; font-weight:700; color:var(--tier);
+    font-variant-numeric:tabular-nums; min-height:14px; }
+  .stone-time.empty{ color:var(--ink-soft); font-weight:400; }
 
-  /* ---------- Score strip ---------- */
+  /* ================= GAME SCREEN ================= */
+  #gameScreen{ flex:1 1 auto; min-height:0; display:flex; flex-direction:column; }
+
+  .run-bar{
+    display:flex; align-items:center; justify-content:space-between;
+    padding:8px 0 4px; flex:0 0 auto;
+  }
+  .run-pill{
+    background:var(--tier-soft); color:var(--tier);
+    padding:5px 14px; border-radius:999px;
+    font-size:12px; font-weight:800; letter-spacing:.08em; text-transform:uppercase;
+  }
+  .linkbtn{
+    appearance:none; background:none; border:none; cursor:pointer;
+    color:var(--ink-soft); font-size:12px; font-weight:700;
+    letter-spacing:.05em; text-transform:uppercase; padding:6px 4px;
+  }
+  .linkbtn.restart{ color:var(--hard); }
+  .linkbtn:focus-visible{ outline:2px solid var(--accent); outline-offset:2px; border-radius:4px; }
+
+  .dots{ display:flex; justify-content:center; gap:7px; padding:6px 0 2px; flex:0 0 auto; }
+  .dot{
+    width:10px; height:10px; border-radius:50%;
+    border:1.5px solid var(--tier); background:transparent; opacity:.3;
+    transition:opacity .2s, box-shadow .2s;
+  }
+  .dot.done{ background:var(--tier); opacity:1; }
+  .dot.revealed{ background:transparent; opacity:.85; }
+  .dot.current{ opacity:1; box-shadow:0 0 0 3px var(--tier-soft); }
+
   .strip{
     display:flex; justify-content:space-between; align-items:baseline;
     padding:6px 2px 4px;
@@ -139,7 +224,6 @@
   .strip b{ color:var(--ink); font-size:14px; letter-spacing:0; }
   .strip .streak-on b{ color:var(--gold); }
 
-  /* ---------- Clue card ---------- */
   main{
     flex:1 1 auto; min-height:0;
     display:flex; flex-direction:column; justify-content:space-evenly;
@@ -151,9 +235,7 @@
     font-family:"Iowan Old Style", Palatino, Georgia, serif;
     margin:0;
   }
-  #clues{
-    display:flex; flex-direction:column; gap:7px;
-  }
+  #clues{ display:flex; flex-direction:column; gap:7px; }
   .clue{
     background:var(--paper-raised);
     border:1px solid var(--rule);
@@ -178,13 +260,9 @@
     transition:background .3s;
   }
   .clue.solved .slot{ background:var(--green); color:var(--green-ink); }
-  .clue.given .slot{ background:var(--red); color:var(--accent-ink); }
+  .clue.given .slot{ background:var(--hard); color:#fff; }
 
-  /* ---------- Answer tiles ---------- */
-  #answer{
-    display:flex; justify-content:center; gap:6px;
-    padding:2px 0;
-  }
+  #answer{ display:flex; justify-content:center; gap:6px; padding:2px 0; }
   .tile{
     width:clamp(34px, 10.5vw, 50px);
     aspect-ratio:1;
@@ -201,19 +279,15 @@
   .tile.filled{ border-color:var(--ink-soft); background:var(--paper-raised); transform:scale(1.04); }
   .tile.hinted{ background:var(--gold-soft); border-color:var(--gold); color:var(--gold); }
   .tile.correct{ background:var(--green); border-color:var(--green); color:var(--green-ink); }
-  .tile.given{ background:var(--paper-raised); border-color:var(--red); color:var(--red); }
+  .tile.given{ background:var(--paper-raised); border-color:var(--hard); color:var(--hard); }
   @keyframes flip{
-    0%{ transform:rotateX(0); }
-    50%{ transform:rotateX(90deg); }
-    100%{ transform:rotateX(0); }
+    0%{ transform:rotateX(0); } 50%{ transform:rotateX(90deg); } 100%{ transform:rotateX(0); }
   }
   .tile.flip{ animation:flip .45s ease both; }
   @keyframes shake{
     0%,100%{ transform:translateX(0); }
-    20%{ transform:translateX(-6px); }
-    40%{ transform:translateX(6px); }
-    60%{ transform:translateX(-4px); }
-    80%{ transform:translateX(4px); }
+    20%{ transform:translateX(-6px); } 40%{ transform:translateX(6px); }
+    60%{ transform:translateX(-4px); } 80%{ transform:translateX(4px); }
   }
   #answer.shake{ animation:shake .4s ease; }
   @media (prefers-reduced-motion: reduce){
@@ -221,35 +295,27 @@
     .tile.filled{ transform:none; }
   }
 
-  /* ---------- Message + actions ---------- */
-  #message{
-    text-align:center; min-height:20px;
-    font-size:14px; font-weight:600;
-  }
+  #message{ text-align:center; min-height:20px; font-size:14px; font-weight:600; }
   #message.win{ color:var(--green); }
   #message.err{ color:var(--red); }
-  .actions{
-    display:flex; justify-content:center; gap:8px;
-    flex:0 0 auto;
-  }
+  .actions{ display:flex; justify-content:center; gap:10px; flex:0 0 auto; }
   .btn{
     appearance:none; border:1px solid var(--rule);
     background:var(--paper-raised); color:var(--ink);
     border-radius:999px;
-    padding:9px 16px;
+    padding:9px 18px;
     font-size:12px; font-weight:700;
     letter-spacing:.08em; text-transform:uppercase;
     cursor:pointer;
     box-shadow:var(--shadow);
   }
   .btn:active{ transform:translateY(1px); }
-  .btn:focus-visible, .key:focus-visible{ outline:2px solid var(--accent); outline-offset:2px; }
+  .btn:focus-visible, .key:focus-visible, .stone:focus-visible{ outline:2px solid var(--accent); outline-offset:2px; }
   .btn.hint{ color:var(--gold); border-color:var(--gold); }
-  .btn.reveal{ color:var(--red); border-color:var(--red); }
+  .btn.reveal{ color:var(--hard); border-color:var(--hard); }
   .btn.primary{ background:var(--accent); color:var(--accent-ink); border-color:var(--accent); }
   .btn[disabled]{ opacity:.4; cursor:default; }
 
-  /* ---------- Keyboard ---------- */
   #keyboard{
     flex:0 0 auto;
     display:flex; flex-direction:column; gap:6px;
@@ -273,21 +339,29 @@
   .key.wide{ max-width:66px; flex:1.6 1 0; font-size:12px; letter-spacing:.05em; }
   .key:active{ background:var(--tile-empty); transform:translateY(1px); }
 
-  /* ---------- Tier-complete overlay ---------- */
+  /* ---------- Run-complete overlay ---------- */
   #done{
     position:fixed; inset:0;
     background:var(--paper);
     display:none;
     flex-direction:column; align-items:center; justify-content:center;
-    gap:14px; text-align:center; padding:24px;
+    gap:12px; text-align:center; padding:24px;
   }
   #done.show{ display:flex; }
+  #done .done-pill{
+    background:var(--tier-soft); color:var(--tier);
+    padding:5px 16px; border-radius:999px;
+    font-size:12px; font-weight:800; letter-spacing:.1em; text-transform:uppercase;
+  }
   #done h2{
     font-family:"Iowan Old Style", Palatino, Georgia, serif;
     font-size:30px; margin:0;
   }
+  #doneTime{ font-size:44px; font-weight:800; font-variant-numeric:tabular-nums; margin:0; color:var(--ink); }
   #done p{ color:var(--ink-soft); max-width:36ch; margin:0; line-height:1.5; }
-  #done .actions{ flex-wrap:wrap; }
+  #doneBest{ font-weight:700; }
+  #doneBest.new{ color:var(--gold); }
+  #done .actions{ flex-wrap:wrap; margin-top:6px; }
 </style>
 
 </head>
@@ -295,47 +369,51 @@
 <div id="app">
   <header>
     <h1 class="masthead">The Common<span class="plus"> + </span>Thread</h1>
-    <div class="dateline">
-      <span id="tiername">Easy edition</span>
-      <span>Puzzle <span id="pnum">1</span> of <span id="ptotal">40</span></span>
-    </div>
+    <div class="dateline" id="dateline"><span>Est. 2026</span></div>
   </header>
 
-  <div class="tiers" role="tablist" aria-label="Difficulty">
-    <button class="tab" data-tier="easy" role="tab">Easy</button>
-    <button class="tab" data-tier="medium" role="tab">Medium</button>
-    <button class="tab" data-tier="hard" role="tab">Hard</button>
-  </div>
+  <!-- ============ PATH / ROUND SELECT ============ -->
+  <section id="pathScreen">
+    <p class="path-intro">Twelve rounds, ten puzzles each. Race the clock.</p>
+    <!-- tier groups injected here -->
+  </section>
 
-  <div class="strip">
-    <span class="streak-wrap">Streak <b id="streak">0</b></span>
-    <span>Solved <b id="solvedCount">0</b></span>
-    <span>Time <b id="clock">0:00</b></span>
-  </div>
-
-  <main>
-    <p class="prompt">One word completes all three&hellip;</p>
-    <div id="clues" aria-live="polite"></div>
-    <div id="answer" aria-label="Your answer"></div>
-    <div id="message" role="status"></div>
-    <div class="actions">
-      <button class="btn hint" id="hintBtn">Hint&nbsp;+0:30</button>
-      <button class="btn reveal" id="revealBtn">Reveal</button>
-      <button class="btn" id="skipBtn">Skip</button>
-      <button class="btn primary" id="nextBtn" style="display:none">Next&nbsp;&rarr;</button>
+  <!-- ============ GAME ============ -->
+  <section id="gameScreen" class="hidden">
+    <div class="run-bar">
+      <button class="linkbtn" id="backBtn">&lsaquo;&nbsp;Rounds</button>
+      <span class="run-pill" id="runLabel">Easy · Round 1</span>
+      <button class="linkbtn restart" id="restartBtn">Restart</button>
     </div>
-  </main>
-
-  <div id="keyboard" aria-label="Keyboard"></div>
+    <div class="dots" id="dots" aria-label="Run progress"></div>
+    <div class="strip">
+      <span class="streak-wrap">Streak <b id="streak">0</b></span>
+      <span>Time <b id="clock">0:00</b></span>
+      <span>Best <b id="best">&mdash;</b></span>
+    </div>
+    <main>
+      <p class="prompt">One word completes all three&hellip;</p>
+      <div id="clues" aria-live="polite"></div>
+      <div id="answer" aria-label="Your answer"></div>
+      <div id="message" role="status"></div>
+      <div class="actions">
+        <button class="btn hint" id="hintBtn">Hint&nbsp;+0:30</button>
+        <button class="btn reveal" id="revealBtn">Reveal&nbsp;+1:00</button>
+      </div>
+    </main>
+    <div id="keyboard" aria-label="Keyboard"></div>
+  </section>
 </div>
 
+<!-- ============ RUN COMPLETE ============ -->
 <div id="done">
-  <h2 id="doneTitle">Edition complete!</h2>
-  <p id="doneStats"></p>
-  <p id="doneNote"></p>
+  <span class="done-pill" id="donePill">Easy · Round 1</span>
+  <h2 id="doneTitle">Round complete!</h2>
+  <p id="doneTime">0:00</p>
+  <p id="doneBest"></p>
   <div class="actions">
-    <button class="btn" id="replayBtn">Replay</button>
-    <button class="btn primary" id="nextTierBtn">Next edition &rarr;</button>
+    <button class="btn" id="againBtn">Run again</button>
+    <button class="btn primary" id="toPathBtn">Rounds &rarr;</button>
   </div>
 </div>
 
@@ -474,79 +552,191 @@ var PUZZLES = [
 ];
 
 var TIER_ORDER = ["easy", "medium", "hard"];
-var TIER_LABEL = { easy:"Easy edition", medium:"Medium edition", hard:"Hard edition" };
+var TIER_LABEL = { easy:"Easy", medium:"Medium", hard:"Hard" };
+var RUNS_PER_TIER = 4, RUN_LEN = 10;
 var BANK = { easy:[], medium:[], hard:[] };
 PUZZLES.forEach(function(p){ BANK[p.d].push(p); });
 
-/* Seconds added to a puzzle's solve time for the 1st, 2nd, 3rd hint. Any
-   hint beyond the third keeps the last (largest) penalty. */
+/* Seconds added to the run clock for the 1st, 2nd, 3rd hint on a puzzle
+   (resets each puzzle). Any further hint keeps the last (largest) value. */
 var HINT_PENALTIES = [30, 45, 60];
+var REVEAL_PENALTY = 60;      // seconds added for revealing an answer
+var ADVANCE_DELAY = 1300;     // ms to admire a solved puzzle before auto-advancing
+var REVEAL_DELAY = 1900;
 
-var STORE_KEY = "commonthread-v3";
+var STORE_KEY = "commonthread-v4";
 
+function blankBest(){ return { easy:[null,null,null,null], medium:[null,null,null,null], hard:[null,null,null,null] }; }
 function loadState(){
   try{
     var s = JSON.parse(localStorage.getItem(STORE_KEY));
-    if (s && s.idx && s.tierTime && TIER_ORDER.indexOf(s.tier) !== -1) return s;
+    if (s && s.best && s.best.easy && s.best.medium && s.best.hard) return s;
   }catch(e){}
-  return { tier:"easy", idx:{easy:0, medium:0, hard:0}, streak:0, solved:0,
-           tierTime:{easy:0, medium:0, hard:0} };
+  return { best: blankBest() };
 }
 function saveState(){
   try{ localStorage.setItem(STORE_KEY, JSON.stringify(state)); }catch(e){}
 }
-
 var state = loadState();
 
-var guess = [];        // player letters, null = empty
-var locked = [];       // true where a hint revealed the letter
-var over = false;      // solved or revealed — puzzle finished
-var hintsUsed = 0;     // hints taken this puzzle
-var penaltyMs = 0;     // time penalty (ms) added by hints this puzzle
-var startedAt = 0;     // timer start for this puzzle
+/* ---- active run (ephemeral; a reload returns you to the path) ---- */
+var run = null;          // { tier, index }
+var runPos = 0;          // 0..9 within the run
+var runResults = [];     // per-position: "solved" | "revealed" | null
+var runStartAt = 0;
+var runPenaltyMs = 0;    // accumulated hint/reveal penalties for the whole run
+var streak = 0;
 var clockTimer = null;
 
-var $ = function(id){ return document.getElementById(id); };
-var cluesEl = $("clues"), answerEl = $("answer"), msgEl = $("message");
-var hintBtn = $("hintBtn"), revealBtn = $("revealBtn"),
-    skipBtn = $("skipBtn"), nextBtn = $("nextBtn");
+/* ---- per-puzzle ---- */
+var guess = [];
+var locked = [];
+var over = false;
+var hintsUsed = 0;
+var advanceTimer = null;
 
-function bank(){ return BANK[state.tier]; }
-function puzzle(){ return bank()[state.idx[state.tier]]; }
-function tierDone(){ return state.idx[state.tier] >= bank().length; }
+var $ = function(id){ return document.getElementById(id); };
+var pathScreen = $("pathScreen"), gameScreen = $("gameScreen"),
+    cluesEl = $("clues"), answerEl = $("answer"), msgEl = $("message"),
+    hintBtn = $("hintBtn"), revealBtn = $("revealBtn"), dotsEl = $("dots");
 
 function fmtTime(ms){
   var s = Math.floor(ms / 1000);
   return Math.floor(s / 60) + ":" + String(s % 60).padStart(2, "0");
 }
-function elapsedMs(){ return (Date.now() - startedAt) + penaltyMs; }
+
+/* ================= PATH SCREEN ================= */
+function tierCompleted(t){ return state.best[t].filter(function(x){ return x != null; }).length; }
+
+function renderPath(){
+  var frag = document.createDocumentFragment();
+  TIER_ORDER.forEach(function(t){
+    var group = document.createElement("div");
+    group.className = "tier-group";
+    group.setAttribute("data-tier", t);
+
+    var head = document.createElement("div");
+    head.className = "tier-head";
+    var tag = document.createElement("span");
+    tag.className = "tier-tag";
+    tag.textContent = TIER_LABEL[t];
+    var meta = document.createElement("span");
+    meta.className = "tier-meta";
+    meta.textContent = tierCompleted(t) + " / " + RUNS_PER_TIER + " cleared";
+    head.appendChild(tag); head.appendChild(meta);
+    group.appendChild(head);
+
+    var path = document.createElement("div");
+    path.className = "path";
+    for (var i = 0; i < RUNS_PER_TIER; i++){
+      (function(idx){
+        var wrap = document.createElement("div");
+        wrap.className = "stone-wrap";
+        var best = state.best[t][idx];
+        var stone = document.createElement("button");
+        stone.type = "button";
+        stone.className = "stone" + (best != null ? " done" : "");
+        stone.innerHTML = best != null ? '<span class="check">&#10003;</span>' : (idx + 1);
+        stone.setAttribute("aria-label",
+          TIER_LABEL[t] + " round " + (idx + 1) + (best != null ? ", best " + fmtTime(best) : ", not yet played"));
+        stone.addEventListener("click", function(){ startRun(t, idx); });
+        var label = document.createElement("div");
+        label.className = "stone-label";
+        label.textContent = "Round " + (idx + 1);
+        var time = document.createElement("div");
+        time.className = "stone-time" + (best != null ? "" : " empty");
+        time.textContent = best != null ? fmtTime(best) : "—";
+        wrap.appendChild(stone); wrap.appendChild(label); wrap.appendChild(time);
+        path.appendChild(wrap);
+      })(i);
+    }
+    group.appendChild(path);
+    frag.appendChild(group);
+  });
+  // clear old groups (keep the intro paragraph)
+  Array.prototype.slice.call(pathScreen.querySelectorAll(".tier-group")).forEach(function(n){ n.remove(); });
+  pathScreen.appendChild(frag);
+}
+
+function showPath(){
+  stopClock();
+  clearTimeout(advanceTimer);
+  run = null;
+  $("done").classList.remove("show");
+  gameScreen.classList.add("hidden");
+  pathScreen.classList.remove("hidden");
+  var total = TIER_ORDER.reduce(function(n, t){ return n + tierCompleted(t); }, 0);
+  $("dateline").innerHTML = "<span>" + total + " of 12 rounds cleared</span>";
+  renderPath();
+}
+
+/* ================= RUN / GAME ================= */
+function runPuzzles(){ return BANK[run.tier].slice(run.index * RUN_LEN, run.index * RUN_LEN + RUN_LEN); }
+function puzzle(){ return runPuzzles()[runPos]; }
+function elapsedMs(){ return (Date.now() - runStartAt) + runPenaltyMs; }
+
 function stopClock(){ if (clockTimer){ clearInterval(clockTimer); clockTimer = null; } }
 function startClock(){
   stopClock();
-  startedAt = Date.now();
+  runStartAt = Date.now();
   $("clock").textContent = "0:00";
-  clockTimer = setInterval(function(){
-    $("clock").textContent = fmtTime(elapsedMs());
-  }, 500);
+  clockTimer = setInterval(function(){ $("clock").textContent = fmtTime(elapsedMs()); }, 250);
 }
 
-function renderHUD(){
-  $("tiername").textContent = TIER_LABEL[state.tier];
-  $("pnum").textContent = Math.min(state.idx[state.tier] + 1, bank().length);
-  $("ptotal").textContent = bank().length;
-  $("streak").textContent = state.streak;
-  $("solvedCount").textContent = state.solved;
-  document.querySelector(".streak-wrap").classList.toggle("streak-on", state.streak >= 3);
-  document.querySelectorAll(".tab").forEach(function(tab){
-    var t = tab.dataset.tier;
-    tab.classList.toggle("active", t === state.tier);
-    tab.setAttribute("aria-selected", t === state.tier);
-    tab.innerHTML = t.charAt(0).toUpperCase() + t.slice(1) +
-      (state.idx[t] >= BANK[t].length ? ' <span class="done-mark">&#10003;</span>' : "");
-  });
+function startRun(tier, index){
+  run = { tier: tier, index: index };
+  runPos = 0;
+  runResults = new Array(RUN_LEN).fill(null);
+  runPenaltyMs = 0;
+  streak = 0;
+  clearTimeout(advanceTimer);
+  pathScreen.classList.add("hidden");
+  $("done").classList.remove("show");
+  gameScreen.classList.remove("hidden");
+  gameScreen.setAttribute("data-tier", tier);
+  $("done").setAttribute("data-tier", tier);
+  $("dateline").innerHTML = "";
+  $("runLabel").textContent = TIER_LABEL[tier] + " · Round " + (index + 1);
+  var best = state.best[tier][index];
+  $("best").innerHTML = best != null ? fmtTime(best) : "&mdash;";
+  startClock();
+  loadPuzzle();
 }
 
-function renderClues(mode){ // mode: "play" | "solved" | "given"
+function loadPuzzle(){
+  var a = puzzle().a;
+  guess = new Array(a.length).fill(null);
+  locked = new Array(a.length).fill(false);
+  over = false;
+  hintsUsed = 0;
+  setMessage("");
+  renderStrip();
+  renderDots();
+  renderClues("play");
+  renderAnswer();
+  updateHintBtn();
+  revealBtn.disabled = false;
+}
+
+function renderStrip(){
+  $("streak").textContent = streak;
+  document.querySelector(".streak-wrap").classList.toggle("streak-on", streak >= 3);
+}
+
+function renderDots(){
+  dotsEl.innerHTML = "";
+  for (var i = 0; i < RUN_LEN; i++){
+    var d = document.createElement("div");
+    var cls = "dot";
+    if (runResults[i] === "solved") cls += " done";
+    else if (runResults[i] === "revealed") cls += " revealed";
+    if (i === runPos && !over) cls += " current";
+    d.className = cls;
+    dotsEl.appendChild(d);
+  }
+}
+
+function renderClues(mode){ // "play" | "solved" | "given"
   cluesEl.innerHTML = "";
   puzzle().c.forEach(function(pair){
     var row = document.createElement("div");
@@ -575,67 +765,20 @@ function renderAnswer(){
   }
 }
 
-function setMessage(text, kind){
-  msgEl.textContent = text || "";
-  msgEl.className = kind || "";
-}
+function setMessage(text, kind){ msgEl.textContent = text || ""; msgEl.className = kind || ""; }
 
-function nextPenaltySec(){
-  return HINT_PENALTIES[Math.min(hintsUsed, HINT_PENALTIES.length - 1)];
-}
+function nextPenaltySec(){ return HINT_PENALTIES[Math.min(hintsUsed, HINT_PENALTIES.length - 1)]; }
 function updateHintBtn(){
   var unrevealed = locked.filter(function(x){ return !x; }).length;
   hintBtn.disabled = unrevealed <= 1;
   hintBtn.innerHTML = "Hint&nbsp;+" + fmtTime(nextPenaltySec() * 1000);
 }
 
-function startPuzzle(){
-  if (tierDone()){ showDone(); return; }
-  $("done").classList.remove("show");
-  var a = puzzle().a;
-  guess = new Array(a.length).fill(null);
-  locked = new Array(a.length).fill(false);
-  over = false;
-  hintsUsed = 0;
-  penaltyMs = 0;
-  nextBtn.style.display = "none";
-  hintBtn.style.display = "";
-  revealBtn.style.display = "";
-  skipBtn.style.display = "";
-  setMessage("");
-  renderHUD();
-  renderClues("play");
-  renderAnswer();
-  updateHintBtn();
-  startClock();
-}
+function firstEmpty(){ for (var i = 0; i < guess.length; i++) if (!locked[i] && !guess[i]) return i; return -1; }
+function lastFilled(){ for (var i = guess.length - 1; i >= 0; i--) if (!locked[i] && guess[i]) return i; return -1; }
 
-function firstEmpty(){
-  for (var i = 0; i < guess.length; i++)
-    if (!locked[i] && !guess[i]) return i;
-  return -1;
-}
-function lastFilled(){
-  for (var i = guess.length - 1; i >= 0; i--)
-    if (!locked[i] && guess[i]) return i;
-  return -1;
-}
-
-function typeLetter(ch){
-  if (over) return;
-  var i = firstEmpty();
-  if (i === -1) return;
-  guess[i] = ch;
-  renderAnswer();
-}
-function backspace(){
-  if (over) return;
-  var i = lastFilled();
-  if (i === -1) return;
-  guess[i] = null;
-  setMessage("");
-  renderAnswer();
-}
+function typeLetter(ch){ if (over) return; var i = firstEmpty(); if (i === -1) return; guess[i] = ch; renderAnswer(); }
+function backspace(){ if (over) return; var i = lastFilled(); if (i === -1) return; guess[i] = null; setMessage(""); renderAnswer(); }
 
 function currentWord(){
   var a = puzzle().a, out = "";
@@ -653,84 +796,69 @@ function check(){
   if (!w){ setMessage("Fill in every letter first.", "err"); return; }
   if (w === puzzle().a){ win(); }
   else {
-    state.streak = 0;
-    saveState(); renderHUD();
+    streak = 0;
+    renderStrip();
     setMessage("Not the one — try again.", "err");
-    answerEl.classList.remove("shake");
-    void answerEl.offsetWidth;
-    answerEl.classList.add("shake");
+    answerEl.classList.remove("shake"); void answerEl.offsetWidth; answerEl.classList.add("shake");
   }
-}
-
-function endPuzzle(){
-  over = true;
-  stopClock();
-  hintBtn.style.display = "none";
-  revealBtn.style.display = "none";
-  skipBtn.style.display = "none";
-  nextBtn.style.display = "";
-  nextBtn.textContent = (state.idx[state.tier] + 1 < bank().length) ? "Next →" : "Finish edition";
-}
-
-function win(){
-  var solveMs = elapsedMs();
-  state.streak += 1;
-  state.solved += 1;
-  state.tierTime[state.tier] += solveMs;
-  saveState();
-  endPuzzle();
-  renderHUD();
-  var tiles = answerEl.children;
-  var a = puzzle().a;
-  for (var i = 0; i < tiles.length; i++){
-    (function(t, ch, d){
-      setTimeout(function(){
-        t.classList.remove("hinted");
-        t.classList.add("correct","flip");
-        t.textContent = ch;
-      }, d);
-    })(tiles[i], a[i], i * 90);
-  }
-  setTimeout(function(){ renderClues("solved"); }, a.length * 90 + 200);
-  var note = penaltyMs ? " (incl. " + fmtTime(penaltyMs) + " hint penalty)" : "";
-  setMessage(praise() + " Solved in " + fmtTime(solveMs) + note + ".", "win");
 }
 
 function praise(){
-  var lines = ["Threaded it!","Sharp as newsprint!","Front-page material!","Hot off the press!","A real wordsmith!"];
-  return lines[state.solved % lines.length];
+  var lines = ["Threaded it!","Sharp!","Nice one.","Got it!","Clean solve."];
+  return lines[runPos % lines.length];
+}
+
+function win(){
+  over = true;
+  streak += 1;
+  runResults[runPos] = "solved";
+  renderStrip();
+  renderDots();
+  var tiles = answerEl.children, a = puzzle().a;
+  for (var i = 0; i < tiles.length; i++){
+    (function(t, ch, d){
+      setTimeout(function(){ t.classList.remove("hinted"); t.classList.add("correct","flip"); t.textContent = ch; }, d);
+    })(tiles[i], a[i], i * 80);
+  }
+  setTimeout(function(){ renderClues("solved"); }, a.length * 80 + 180);
+  setMessage(praise(), "win");
+  scheduleAdvance(ADVANCE_DELAY);
 }
 
 function reveal(){
   if (over) return;
-  state.streak = 0;
-  saveState();
-  endPuzzle();
-  renderHUD();
-  var tiles = answerEl.children;
-  var a = puzzle().a;
-  for (var i = 0; i < tiles.length; i++){
-    tiles[i].className = "tile filled given";
-    tiles[i].textContent = a[i];
-  }
+  over = true;
+  streak = 0;
+  runResults[runPos] = "revealed";
+  runPenaltyMs += REVEAL_PENALTY * 1000;
+  renderStrip();
+  renderDots();
+  $("clock").textContent = fmtTime(elapsedMs());
+  var tiles = answerEl.children, a = puzzle().a;
+  for (var i = 0; i < tiles.length; i++){ tiles[i].className = "tile filled given"; tiles[i].textContent = a[i]; }
   renderClues("given");
-  setMessage("The thread was " + a + " — streak reset.", "err");
+  setMessage("The thread was " + a + ".  +1:00", "err");
+  scheduleAdvance(REVEAL_DELAY);
+}
+
+function scheduleAdvance(delay){
+  clearTimeout(advanceTimer);
+  advanceTimer = setTimeout(function(){
+    if (runPos + 1 >= RUN_LEN) finishRun();
+    else { runPos += 1; loadPuzzle(); }
+  }, delay);
 }
 
 function hint(){
   if (over) return;
-  var a = puzzle().a;
-  var spots = [];
+  var a = puzzle().a, spots = [];
   for (var i = 0; i < a.length; i++) if (!locked[i]) spots.push(i);
   if (spots.length <= 1) return;
-  /* First hint anchors the word with its first letter; later hints
-     reveal a random remaining letter so repeat hints stay interesting.
-     Each hint adds a time penalty (streak is untouched — only a wrong
-     guess breaks a streak). */
-  var pick = hintsUsed === 0 && !locked[0]
-    ? 0
-    : spots[Math.floor(Math.random() * spots.length)];
-  penaltyMs += nextPenaltySec() * 1000;
+  /* First hint anchors the word with its first letter; later hints reveal a
+     random remaining letter. Each adds a time penalty; streak is untouched
+     (only a wrong guess breaks a streak). */
+  var pick = hintsUsed === 0 && !locked[0] ? 0 : spots[Math.floor(Math.random() * spots.length)];
+  runPenaltyMs += nextPenaltySec() * 1000;
   hintsUsed += 1;
   locked[pick] = true;
   guess[pick] = null;
@@ -739,39 +867,22 @@ function hint(){
   updateHintBtn();
 }
 
-function advance(){
-  state.idx[state.tier] += 1;
-  saveState();
-  if (tierDone()){ showDone(); } else { startPuzzle(); }
-}
-
-function skip(){
-  state.streak = 0;
-  saveState();
+function finishRun(){
   stopClock();
-  advance();
-}
-
-function showDone(){
-  stopClock();
-  renderHUD();
-  var t = state.tier;
-  $("doneTitle").textContent = "Extra! Extra!";
-  $("doneStats").textContent = TIER_LABEL[t] + " complete · Total time " + fmtTime(state.tierTime[t]);
-  var nextTier = TIER_ORDER[TIER_ORDER.indexOf(t) + 1];
-  $("doneNote").textContent = nextTier
-    ? "Ready for the " + nextTier + " edition, or replay this one?"
-    : "You finished the hardest edition. Replay any tier from the tabs above.";
-  $("nextTierBtn").style.display = nextTier ? "" : "none";
-  $("replayBtn").textContent = "Replay " + t;
+  var t = elapsedMs();
+  var prev = state.best[run.tier][run.index];
+  var isBest = prev == null || t < prev;
+  if (isBest){ state.best[run.tier][run.index] = t; saveState(); }
+  $("done").setAttribute("data-tier", run.tier);
+  $("donePill").textContent = TIER_LABEL[run.tier] + " · Round " + (run.index + 1);
+  var solved = runResults.filter(function(r){ return r === "solved"; }).length;
+  $("doneTitle").textContent = solved === RUN_LEN ? "Clean run!" : "Round complete!";
+  $("doneTime").textContent = fmtTime(t);
+  var bestEl = $("doneBest");
+  if (isBest && prev == null){ bestEl.textContent = solved + " of 10 solved · first time on the board!"; bestEl.className = "new"; }
+  else if (isBest){ bestEl.textContent = solved + " of 10 solved · new best (was " + fmtTime(prev) + ")"; bestEl.className = "new"; }
+  else { bestEl.textContent = solved + " of 10 solved · best stays " + fmtTime(prev); bestEl.className = ""; }
   $("done").classList.add("show");
-}
-
-function setTier(t){
-  state.tier = t;
-  saveState();
-  $("done").classList.remove("show");
-  startPuzzle();
 }
 
 /* ---------- keyboard ---------- */
@@ -780,15 +891,9 @@ var kb = $("keyboard");
 ROWS.forEach(function(row, ri){
   var r = document.createElement("div");
   r.className = "krow";
-  if (ri === 2){
-    r.appendChild(makeKey("ENTER", "wide", check));
-  }
-  row.split("").forEach(function(ch){
-    r.appendChild(makeKey(ch, "", function(){ typeLetter(ch); }));
-  });
-  if (ri === 2){
-    r.appendChild(makeKey("⌫", "wide", backspace, "Backspace"));
-  }
+  if (ri === 2) r.appendChild(makeKey("ENTER", "wide", check));
+  row.split("").forEach(function(ch){ r.appendChild(makeKey(ch, "", function(){ typeLetter(ch); })); });
+  if (ri === 2) r.appendChild(makeKey("⌫", "wide", backspace, "Backspace"));
   kb.appendChild(r);
 });
 function makeKey(label, cls, fn, aria){
@@ -803,34 +908,21 @@ function makeKey(label, cls, fn, aria){
 
 document.addEventListener("keydown", function(e){
   if (e.metaKey || e.ctrlKey || e.altKey) return;
-  if ($("done").classList.contains("show")) return;
-  /* preventDefault so Enter doesn't also re-activate whichever button
-     still holds focus (e.g. a tier tab clicked moments earlier). */
-  if (e.key === "Enter"){ e.preventDefault(); over ? advance() : check(); }
+  if (gameScreen.classList.contains("hidden") || $("done").classList.contains("show")) return;
+  if (over) return;
+  if (e.key === "Enter"){ e.preventDefault(); check(); }
   else if (e.key === "Backspace"){ e.preventDefault(); backspace(); }
   else if (/^[a-zA-Z]$/.test(e.key)){ typeLetter(e.key.toUpperCase()); }
 });
 
 hintBtn.addEventListener("click", hint);
 revealBtn.addEventListener("click", reveal);
-skipBtn.addEventListener("click", skip);
-nextBtn.addEventListener("click", advance);
-$("replayBtn").addEventListener("click", function(){
-  state.idx[state.tier] = 0;
-  state.tierTime[state.tier] = 0;
-  saveState();
-  $("done").classList.remove("show");
-  startPuzzle();
-});
-$("nextTierBtn").addEventListener("click", function(){
-  var next = TIER_ORDER[TIER_ORDER.indexOf(state.tier) + 1];
-  if (next) setTier(next);
-});
-document.querySelectorAll(".tab").forEach(function(tab){
-  tab.addEventListener("click", function(){ setTier(tab.dataset.tier); });
-});
+$("backBtn").addEventListener("click", showPath);
+$("restartBtn").addEventListener("click", function(){ startRun(run.tier, run.index); });
+$("againBtn").addEventListener("click", function(){ startRun(run.tier, run.index); });
+$("toPathBtn").addEventListener("click", showPath);
 
-startPuzzle();
+showPath();
 })();
 </script>
 
