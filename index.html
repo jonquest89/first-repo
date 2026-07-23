@@ -399,6 +399,7 @@
       <div class="actions">
         <button class="btn hint" id="hintBtn">Hint&nbsp;+0:30</button>
         <button class="btn reveal" id="revealBtn">Reveal&nbsp;+1:00</button>
+        <button class="btn primary" id="nextBtn" style="display:none">Next&nbsp;&rarr;</button>
       </div>
     </main>
     <div id="keyboard" aria-label="Keyboard"></div>
@@ -561,8 +562,6 @@ PUZZLES.forEach(function(p){ BANK[p.d].push(p); });
    (resets each puzzle). Any further hint keeps the last (largest) value. */
 var HINT_PENALTIES = [30, 45, 60];
 var REVEAL_PENALTY = 60;      // seconds added for revealing an answer
-var ADVANCE_DELAY = 1300;     // ms to admire a solved puzzle before auto-advancing
-var REVEAL_DELAY = 1900;
 
 var STORE_KEY = "commonthread-v4";
 
@@ -593,12 +592,12 @@ var guess = [];
 var locked = [];
 var over = false;
 var hintsUsed = 0;
-var advanceTimer = null;
 
 var $ = function(id){ return document.getElementById(id); };
 var pathScreen = $("pathScreen"), gameScreen = $("gameScreen"),
     cluesEl = $("clues"), answerEl = $("answer"), msgEl = $("message"),
-    hintBtn = $("hintBtn"), revealBtn = $("revealBtn"), dotsEl = $("dots");
+    hintBtn = $("hintBtn"), revealBtn = $("revealBtn"), nextBtn = $("nextBtn"),
+    dotsEl = $("dots");
 
 function fmtTime(ms){
   var s = Math.floor(ms / 1000);
@@ -660,7 +659,6 @@ function renderPath(){
 
 function showPath(){
   stopClock();
-  clearTimeout(advanceTimer);
   run = null;
   $("done").classList.remove("show");
   gameScreen.classList.add("hidden");
@@ -689,7 +687,6 @@ function startRun(tier, index){
   runResults = new Array(RUN_LEN).fill(null);
   runPenaltyMs = 0;
   streak = 0;
-  clearTimeout(advanceTimer);
   pathScreen.classList.add("hidden");
   $("done").classList.remove("show");
   gameScreen.classList.remove("hidden");
@@ -710,12 +707,15 @@ function loadPuzzle(){
   over = false;
   hintsUsed = 0;
   setMessage("");
+  hintBtn.style.display = "";
+  revealBtn.style.display = "";
+  nextBtn.style.display = "none";
+  revealBtn.disabled = false;
   renderStrip();
   renderDots();
   renderClues("play");
   renderAnswer();
   updateHintBtn();
-  revealBtn.disabled = false;
 }
 
 function renderStrip(){
@@ -822,7 +822,7 @@ function win(){
   }
   setTimeout(function(){ renderClues("solved"); }, a.length * 80 + 180);
   setMessage(praise(), "win");
-  scheduleAdvance(ADVANCE_DELAY);
+  showNext();
 }
 
 function reveal(){
@@ -838,15 +838,19 @@ function reveal(){
   for (var i = 0; i < tiles.length; i++){ tiles[i].className = "tile filled given"; tiles[i].textContent = a[i]; }
   renderClues("given");
   setMessage("The thread was " + a + ".  +1:00", "err");
-  scheduleAdvance(REVEAL_DELAY);
+  showNext();
 }
 
-function scheduleAdvance(delay){
-  clearTimeout(advanceTimer);
-  advanceTimer = setTimeout(function(){
-    if (runPos + 1 >= RUN_LEN) finishRun();
-    else { runPos += 1; loadPuzzle(); }
-  }, delay);
+function showNext(){
+  hintBtn.style.display = "none";
+  revealBtn.style.display = "none";
+  nextBtn.style.display = "";
+  nextBtn.innerHTML = (runPos + 1 >= RUN_LEN) ? "Finish&nbsp;&rarr;" : "Next&nbsp;&rarr;";
+}
+
+function advance(){
+  if (runPos + 1 >= RUN_LEN) finishRun();
+  else { runPos += 1; loadPuzzle(); }
 }
 
 function hint(){
@@ -909,7 +913,10 @@ function makeKey(label, cls, fn, aria){
 document.addEventListener("keydown", function(e){
   if (e.metaKey || e.ctrlKey || e.altKey) return;
   if (gameScreen.classList.contains("hidden") || $("done").classList.contains("show")) return;
-  if (over) return;
+  if (over){
+    if (e.key === "Enter"){ e.preventDefault(); advance(); }
+    return;
+  }
   if (e.key === "Enter"){ e.preventDefault(); check(); }
   else if (e.key === "Backspace"){ e.preventDefault(); backspace(); }
   else if (/^[a-zA-Z]$/.test(e.key)){ typeLetter(e.key.toUpperCase()); }
@@ -917,6 +924,7 @@ document.addEventListener("keydown", function(e){
 
 hintBtn.addEventListener("click", hint);
 revealBtn.addEventListener("click", reveal);
+nextBtn.addEventListener("click", advance);
 $("backBtn").addEventListener("click", showPath);
 $("restartBtn").addEventListener("click", function(){ startRun(run.tier, run.index); });
 $("againBtn").addEventListener("click", function(){ startRun(run.tier, run.index); });
