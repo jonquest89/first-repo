@@ -319,7 +319,8 @@
   }
   #answer.shake{ animation:shake .4s ease; }
   @media (prefers-reduced-motion: reduce){
-    .tile.flip, #answer.shake, #doneStars .star.on, .meter-stars .star.breaking{ animation:none; }
+    .tile.flip, #answer.shake, #doneStars .star.on, .meter-stars .star.breaking,
+    .finale-stars .star{ animation:none; }
     .tile.filled{ transform:none; }
     .meter-fill{ transition:none; }
   }
@@ -395,6 +396,57 @@
   #doneBest{ font-weight:700; }
   #doneBest.new{ color:var(--gold); }
   #done .actions{ flex-wrap:wrap; margin-top:6px; }
+
+  /* ---------- finale (100% mastery) ---------- */
+  #finale{ position:fixed; inset:0; z-index:20; background:var(--paper); display:none; overflow:hidden; }
+  #finale.show{ display:block; }
+  #confetti{ position:absolute; inset:0; width:100%; height:100%; pointer-events:none; }
+  .finale-inner{
+    position:relative; z-index:1;
+    height:100%; box-sizing:border-box;
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+    gap:16px; text-align:center; padding:28px 22px;
+    max-width:480px; margin:0 auto;
+  }
+  .finale-eyebrow{ font-size:11px; letter-spacing:.22em; text-transform:uppercase; color:var(--ink-soft); }
+  .finale-title{
+    font-family:"Iowan Old Style", Palatino, Georgia, serif;
+    font-size:clamp(30px, 9vw, 42px); line-height:1.05; margin:0; text-wrap:balance;
+    color:var(--gold);
+  }
+  @supports ((-webkit-background-clip:text) or (background-clip:text)){
+    .finale-title{
+      background:linear-gradient(100deg, var(--gold), #E7C766 45%, var(--gold));
+      -webkit-background-clip:text; background-clip:text; color:transparent;
+    }
+  }
+  .finale-stars{ display:flex; gap:12px; font-size:clamp(40px, 13vw, 60px); line-height:1; color:var(--gold); }
+  .finale-stars .star{ color:var(--gold); opacity:1; animation:starpop .5s ease both; }
+  .finale-stars .star:nth-child(2){ animation-delay:.15s; }
+  .finale-stars .star:nth-child(3){ animation-delay:.3s; }
+  .finale-sub{ color:var(--ink-soft); max-width:34ch; margin:0; line-height:1.5; font-size:14px; }
+  .finale-grid{ display:flex; flex-direction:column; gap:8px; width:100%; max-width:300px; }
+  .finale-row{ display:flex; align-items:center; gap:10px; }
+  .finale-dots{ display:flex; gap:6px; margin-left:auto; }
+  .finale-dot{
+    width:18px; height:18px; border-radius:50%;
+    background:var(--tier); color:#fff;
+    display:flex; align-items:center; justify-content:center; font-size:11px;
+  }
+
+  /* ---------- master banner on the path ---------- */
+  .master-banner{
+    appearance:none; cursor:pointer; width:100%;
+    display:flex; align-items:center; gap:10px;
+    background:linear-gradient(100deg, var(--gold-soft), var(--paper-raised));
+    border:1px solid var(--gold); border-radius:10px;
+    padding:11px 14px; box-shadow:var(--shadow);
+    color:var(--ink); font-weight:800; font-size:13px; letter-spacing:.03em;
+  }
+  .master-banner .mb-stars{ color:var(--gold); letter-spacing:2px; }
+  .master-banner .mb-cta{ margin-left:auto; font-size:10px; text-transform:uppercase; letter-spacing:.1em; color:var(--gold); }
+  .master-banner:active{ transform:translateY(1px); }
+  .master-banner:focus-visible{ outline:2px solid var(--gold); outline-offset:2px; }
 </style>
 
 </head>
@@ -451,6 +503,19 @@
   <div class="actions">
     <button class="btn" id="againBtn">Run again</button>
     <button class="btn primary" id="toPathBtn">Rounds &rarr;</button>
+  </div>
+</div>
+
+<!-- ============ FINALE (all 12 runs 3-starred) ============ -->
+<div id="finale">
+  <canvas id="confetti"></canvas>
+  <div class="finale-inner">
+    <div class="finale-eyebrow">Final Edition · Est. 2026</div>
+    <h2 class="finale-title">Master of the Thread</h2>
+    <div class="finale-stars"><span class="star">★</span><span class="star">★</span><span class="star">★</span></div>
+    <p class="finale-sub">All twelve rounds cleared at three stars — thirty-six in all, and not a hint out of place.</p>
+    <div class="finale-grid" id="finaleGrid"></div>
+    <button class="btn primary" id="finaleClose">Back to rounds</button>
   </div>
 </div>
 
@@ -666,6 +731,9 @@ function renderMeter(animate){
 
 /* ================= PATH SCREEN ================= */
 function tierCompleted(t){ return state.best[t].filter(function(x){ return x != null; }).length; }
+function allMastered(){
+  return TIER_ORDER.every(function(t){ return state.best[t].every(function(s){ return s === 3; }); });
+}
 
 function renderPath(){
   var frag = document.createDocumentFragment();
@@ -715,15 +783,34 @@ function renderPath(){
   // clear old groups (keep the intro paragraph)
   Array.prototype.slice.call(pathScreen.querySelectorAll(".tier-group")).forEach(function(n){ n.remove(); });
   pathScreen.appendChild(frag);
+  renderMasterBanner();
+}
+
+/* A persistent replay banner once every round is 3-starred. */
+function renderMasterBanner(){
+  var existing = pathScreen.querySelector(".master-banner");
+  if (existing) existing.remove();
+  if (!allMastered()) return;
+  var b = document.createElement("button");
+  b.type = "button";
+  b.className = "master-banner";
+  b.innerHTML = '<span class="mb-stars">★★★</span> Master of the Thread' +
+                '<span class="mb-cta">Replay finale</span>';
+  b.addEventListener("click", showFinale);
+  pathScreen.querySelector(".path-intro").insertAdjacentElement("afterend", b);
 }
 
 function showPath(){
   run = null;
+  stopConfetti();
   $("done").classList.remove("show");
+  $("finale").classList.remove("show");
   gameScreen.classList.add("hidden");
   pathScreen.classList.remove("hidden");
   var total = TIER_ORDER.reduce(function(n, t){ return n + tierCompleted(t); }, 0);
-  $("dateline").innerHTML = "<span>" + total + " of 12 rounds cleared</span>";
+  $("dateline").innerHTML = allMastered()
+    ? "<span>Mastered — all 12 rounds at three stars</span>"
+    : "<span>" + total + " of 12 rounds cleared</span>";
   renderPath();
 }
 
@@ -922,10 +1009,14 @@ function hint(){
 }
 
 function finishRun(){
+  var wasMastered = allMastered();
   var stars = currentStars();
   var prev = state.best[run.tier][run.index];
   var isBest = prev == null || stars > prev;
   if (isBest){ state.best[run.tier][run.index] = stars; saveState(); }
+  /* Completing the set (this run was the last one below 3 stars) launches
+     the finale instead of the usual round-complete card. */
+  if (!wasMastered && allMastered()){ showFinale(); return; }
   $("done").setAttribute("data-tier", run.tier);
   $("donePill").textContent = TIER_LABEL[run.tier] + " · Round " + (run.index + 1);
   $("doneTitle").textContent = stars === 3 ? "Flawless!" : (stars === 2 ? "Well threaded!" : "Round complete!");
@@ -947,6 +1038,102 @@ function finishRun(){
   bestEl.textContent = aid + " " + note;
   bestEl.className = isBest ? "new" : "";
   $("done").classList.add("show");
+}
+
+/* ================= FINALE ================= */
+function buildFinaleGrid(){
+  var g = $("finaleGrid");
+  g.innerHTML = "";
+  TIER_ORDER.forEach(function(t){
+    var row = document.createElement("div");
+    row.className = "finale-row";
+    row.setAttribute("data-tier", t);
+    var tag = document.createElement("span");
+    tag.className = "tier-tag";
+    tag.textContent = TIER_LABEL[t];
+    var dots = document.createElement("div");
+    dots.className = "finale-dots";
+    for (var i = 0; i < RUNS_PER_TIER; i++){
+      var d = document.createElement("span");
+      d.className = "finale-dot";
+      d.textContent = "★";
+      dots.appendChild(d);
+    }
+    row.appendChild(tag); row.appendChild(dots);
+    g.appendChild(row);
+  });
+}
+
+function showFinale(){
+  buildFinaleGrid();
+  $("finale").classList.add("show");
+  launchConfetti();
+}
+function closeFinale(){
+  stopConfetti();
+  $("finale").classList.remove("show");
+  showPath();
+}
+
+var confettiRAF = null;
+function stopConfetti(){
+  if (confettiRAF){ cancelAnimationFrame(confettiRAF); confettiRAF = null; }
+  var c = $("confetti"), ctx = c && c.getContext("2d");
+  if (ctx) ctx.clearRect(0, 0, c.width, c.height);
+}
+function cssVar(name, fallback){
+  var v = getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+  return v || fallback;
+}
+function drawStar(ctx, R){
+  var r = R * 0.45;
+  ctx.beginPath();
+  for (var i = 0; i < 10; i++){
+    var rad = (i % 2 === 0) ? R : r;
+    var a = Math.PI / 5 * i - Math.PI / 2;
+    var x = Math.cos(a) * rad, y = Math.sin(a) * rad;
+    if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+  }
+  ctx.closePath();
+  ctx.fill();
+}
+function launchConfetti(){
+  stopConfetti();
+  if (window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+  var cv = $("confetti"), ctx = cv.getContext("2d");
+  var dpr = Math.min(window.devicePixelRatio || 1, 2);
+  var W = cv.clientWidth, H = cv.clientHeight;
+  cv.width = W * dpr; cv.height = H * dpr;
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  var colors = [cssVar("--gold", "#C9930A"), "#E7C766", cssVar("--accent", "#2742C9"), cssVar("--hard", "#B23A3A")];
+  var parts = [];
+  for (var i = 0; i < 100; i++){
+    parts.push({
+      x: Math.random() * W, y: -20 - Math.random() * H,
+      r: 4 + Math.random() * 5, c: colors[i % colors.length],
+      vx: -1 + Math.random() * 2, vy: 1.6 + Math.random() * 2.6,
+      rot: Math.random() * 6.28, vr: -0.16 + Math.random() * 0.32,
+      star: Math.random() < 0.45
+    });
+  }
+  var start = null, DURATION = 4400;
+  function frame(ts){
+    if (start === null) start = ts;
+    ctx.clearRect(0, 0, W, H);
+    for (var i = 0; i < parts.length; i++){
+      var p = parts[i];
+      p.x += p.vx; p.y += p.vy; p.vy += 0.02; p.rot += p.vr;
+      if (p.y > H + 20){ p.y = -20; p.x = Math.random() * W; }
+      ctx.save();
+      ctx.translate(p.x, p.y); ctx.rotate(p.rot); ctx.fillStyle = p.c;
+      if (p.star) drawStar(ctx, p.r);
+      else ctx.fillRect(-p.r / 2, -p.r / 2, p.r, p.r * 0.6);
+      ctx.restore();
+    }
+    if (ts - start < DURATION) confettiRAF = requestAnimationFrame(frame);
+    else stopConfetti();
+  }
+  confettiRAF = requestAnimationFrame(frame);
 }
 
 /* ---------- keyboard ---------- */
@@ -972,7 +1159,8 @@ function makeKey(label, cls, fn, aria){
 
 document.addEventListener("keydown", function(e){
   if (e.metaKey || e.ctrlKey || e.altKey) return;
-  if (gameScreen.classList.contains("hidden") || $("done").classList.contains("show")) return;
+  if (gameScreen.classList.contains("hidden") || $("done").classList.contains("show")
+      || $("finale").classList.contains("show")) return;
   if (over){
     if (e.key === "Enter"){ e.preventDefault(); advance(); }
     return;
@@ -989,6 +1177,7 @@ $("backBtn").addEventListener("click", showPath);
 $("restartBtn").addEventListener("click", function(){ startRun(run.tier, run.index); });
 $("againBtn").addEventListener("click", function(){ startRun(run.tier, run.index); });
 $("toPathBtn").addEventListener("click", showPath);
+$("finaleClose").addEventListener("click", closeFinale);
 
 showPath();
 })();
