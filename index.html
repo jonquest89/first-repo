@@ -217,7 +217,7 @@
   .dot.current{ opacity:1; box-shadow:0 0 0 3px var(--tier-soft); }
 
   .strip{
-    display:flex; justify-content:space-between; align-items:baseline;
+    display:flex; justify-content:space-between; align-items:center;
     padding:6px 2px 4px;
     font-size:11px; color:var(--ink-soft);
     letter-spacing:.06em; text-transform:uppercase;
@@ -226,6 +226,26 @@
   }
   .strip b{ color:var(--ink); font-size:14px; letter-spacing:0; }
   .strip .streak-on b{ color:var(--gold); }
+
+  /* ---------- hint mastery meter ---------- */
+  .meter{ display:flex; flex-direction:column; align-items:center; gap:4px; }
+  .meter-stars{ font-size:17px; line-height:1; }
+  .meter-bar{
+    width:108px; height:6px; border-radius:3px;
+    background:var(--tile-empty); overflow:hidden;
+  }
+  .meter-fill{
+    height:100%; width:100%; border-radius:3px;
+    background:var(--gold);
+    transition:width .35s ease;
+  }
+  @keyframes starbreak{
+    0%{ transform:scale(1) rotate(0); color:var(--gold); opacity:1; }
+    30%{ transform:scale(1.25) rotate(-10deg); }
+    60%{ transform:scale(1) rotate(6deg); }
+    100%{ transform:scale(1) rotate(0); color:var(--ink-soft); opacity:.28; }
+  }
+  .meter-stars .star.breaking{ animation:starbreak .55s ease both; }
 
   main{
     flex:1 1 auto; min-height:0;
@@ -294,8 +314,9 @@
   }
   #answer.shake{ animation:shake .4s ease; }
   @media (prefers-reduced-motion: reduce){
-    .tile.flip, #answer.shake, #doneStars .star.on{ animation:none; }
+    .tile.flip, #answer.shake, #doneStars .star.on, .meter-stars .star.breaking{ animation:none; }
     .tile.filled{ transform:none; }
+    .meter-fill{ transition:none; }
   }
 
   #message{ text-align:center; min-height:20px; font-size:14px; font-weight:600; }
@@ -395,7 +416,10 @@
     <div class="dots" id="dots" aria-label="Run progress"></div>
     <div class="strip">
       <span class="streak-wrap">Streak <b id="streak">0</b></span>
-      <span>Stars <b id="stars" class="stars"></b></span>
+      <div class="meter" aria-label="Hint mastery">
+        <div class="meter-stars stars" id="meterStars"></div>
+        <div class="meter-bar"><div class="meter-fill" id="meterFill"></div></div>
+      </div>
       <span>Best <b id="best" class="stars">&mdash;</b></span>
     </div>
     <main>
@@ -614,7 +638,26 @@ function starMarkup(n){
   for (var i = 0; i < 3; i++) s += '<span class="star' + (i < n ? " on" : "") + '">★</span>';
   return s;
 }
-function renderStars(){ $("stars").innerHTML = starMarkup(currentStars()); }
+
+/* Mastery meter: three stars over a bar that starts full and loses a third
+   with each hint (a reveal counts as REVEAL_HINT_COST hints). Stars break as
+   the run's star rating drops; the star that just broke gets a shake+fade. */
+var prevStars = 3;
+function renderMeter(animate){
+  var stars = currentStars();
+  var used = Math.min(hintUnits(), 3);
+  $("meterFill").style.width = ((3 - used) / 3 * 100) + "%";
+  var host = $("meterStars");
+  host.innerHTML = "";
+  for (var i = 0; i < 3; i++){
+    var s = document.createElement("span");
+    s.className = "star" + (i < stars ? " on" : "");
+    if (animate && i >= stars && i < prevStars) s.className += " breaking";
+    s.textContent = "★";
+    host.appendChild(s);
+  }
+  prevStars = stars;
+}
 
 /* ================= PATH SCREEN ================= */
 function tierCompleted(t){ return state.best[t].filter(function(x){ return x != null; }).length; }
@@ -699,6 +742,7 @@ function startRun(tier, index){
   $("runLabel").textContent = TIER_LABEL[tier] + " · Round " + (index + 1);
   var best = state.best[tier][index];
   $("best").innerHTML = best != null ? starMarkup(best) : "&mdash;";
+  prevStars = 3;
   loadPuzzle();
 }
 
@@ -714,7 +758,7 @@ function loadPuzzle(){
   nextBtn.style.display = "none";
   revealBtn.disabled = false;
   renderStrip();
-  renderStars();
+  renderMeter(false);
   renderDots();
   renderClues("play");
   renderAnswer();
@@ -833,7 +877,7 @@ function reveal(){
   runResults[runPos] = "revealed";
   runReveals += 1;
   renderStrip();
-  renderStars();
+  renderMeter(true);
   renderDots();
   var tiles = answerEl.children, a = puzzle().a;
   for (var i = 0; i < tiles.length; i++){ tiles[i].className = "tile filled given"; tiles[i].textContent = a[i]; }
@@ -867,7 +911,7 @@ function hint(){
   hintsUsed += 1;
   locked[pick] = true;
   guess[pick] = null;
-  renderStars();
+  renderMeter(true);
   renderAnswer();
   updateHintBtn();
 }
