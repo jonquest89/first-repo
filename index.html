@@ -179,9 +179,12 @@
   .stone:active{ transform:translateY(1px) scale(.97); }
   .stone:focus-visible{ outline:2px solid var(--tier); outline-offset:3px; }
   .stone-label{ font-size:9px; letter-spacing:.08em; text-transform:uppercase; color:var(--ink-soft); }
-  .stone-time{ font-size:11px; font-weight:700; color:var(--tier);
-    font-variant-numeric:tabular-nums; min-height:14px; }
-  .stone-time.empty{ color:var(--ink-soft); font-weight:400; }
+  .stone-stars{ display:flex; gap:1px; min-height:15px; font-size:13px; }
+
+  /* ---------- star rating ---------- */
+  .stars{ display:inline-flex; gap:1px; vertical-align:-1px; }
+  .star{ color:var(--ink-soft); opacity:.28; }
+  .star.on{ color:var(--gold); opacity:1; }
 
   /* ================= GAME SCREEN ================= */
   #gameScreen{ flex:1 1 auto; min-height:0; display:flex; flex-direction:column; }
@@ -291,7 +294,7 @@
   }
   #answer.shake{ animation:shake .4s ease; }
   @media (prefers-reduced-motion: reduce){
-    .tile.flip, #answer.shake{ animation:none; }
+    .tile.flip, #answer.shake, #doneStars .star.on{ animation:none; }
     .tile.filled{ transform:none; }
   }
 
@@ -357,7 +360,11 @@
     font-family:"Iowan Old Style", Palatino, Georgia, serif;
     font-size:30px; margin:0;
   }
-  #doneTime{ font-size:44px; font-weight:800; font-variant-numeric:tabular-nums; margin:0; color:var(--ink); }
+  #doneStars{ gap:10px; font-size:52px; line-height:1; margin:2px 0; }
+  #doneStars .star.on{ animation:starpop .45s ease both; }
+  #doneStars .star.on:nth-child(2){ animation-delay:.12s; }
+  #doneStars .star.on:nth-child(3){ animation-delay:.24s; }
+  @keyframes starpop{ 0%{ transform:scale(.2); opacity:0; } 65%{ transform:scale(1.25); } 100%{ transform:scale(1); opacity:1; } }
   #done p{ color:var(--ink-soft); max-width:36ch; margin:0; line-height:1.5; }
   #doneBest{ font-weight:700; }
   #doneBest.new{ color:var(--gold); }
@@ -374,7 +381,7 @@
 
   <!-- ============ PATH / ROUND SELECT ============ -->
   <section id="pathScreen">
-    <p class="path-intro">Twelve rounds, ten puzzles each. Race the clock.</p>
+    <p class="path-intro">Twelve rounds, ten puzzles each. Solve hint-free for three stars.</p>
     <!-- tier groups injected here -->
   </section>
 
@@ -388,8 +395,8 @@
     <div class="dots" id="dots" aria-label="Run progress"></div>
     <div class="strip">
       <span class="streak-wrap">Streak <b id="streak">0</b></span>
-      <span>Time <b id="clock">0:00</b></span>
-      <span>Best <b id="best">&mdash;</b></span>
+      <span>Stars <b id="stars" class="stars"></b></span>
+      <span>Best <b id="best" class="stars">&mdash;</b></span>
     </div>
     <main>
       <p class="prompt">One word completes all three&hellip;</p>
@@ -397,8 +404,8 @@
       <div id="answer" aria-label="Your answer"></div>
       <div id="message" role="status"></div>
       <div class="actions">
-        <button class="btn hint" id="hintBtn">Hint&nbsp;+0:30</button>
-        <button class="btn reveal" id="revealBtn">Reveal&nbsp;+1:00</button>
+        <button class="btn hint" id="hintBtn">Hint</button>
+        <button class="btn reveal" id="revealBtn">Reveal</button>
         <button class="btn primary" id="nextBtn" style="display:none">Next&nbsp;&rarr;</button>
       </div>
     </main>
@@ -410,7 +417,7 @@
 <div id="done">
   <span class="done-pill" id="donePill">Easy · Round 1</span>
   <h2 id="doneTitle">Round complete!</h2>
-  <p id="doneTime">0:00</p>
+  <div id="doneStars" class="stars"></div>
   <p id="doneBest"></p>
   <div class="actions">
     <button class="btn" id="againBtn">Run again</button>
@@ -558,12 +565,14 @@ var RUNS_PER_TIER = 4, RUN_LEN = 10;
 var BANK = { easy:[], medium:[], hard:[] };
 PUZZLES.forEach(function(p){ BANK[p.d].push(p); });
 
-/* Seconds added to the run clock for the 1st, 2nd, 3rd hint on a puzzle
-   (resets each puzzle). Any further hint keeps the last (largest) value. */
-var HINT_PENALTIES = [30, 45, 60];
-var REVEAL_PENALTY = 60;      // seconds added for revealing an answer
+/* Star rating for a run, by hints used across all 10 puzzles:
+   0 hints -> 3 stars, 1-2 hints -> 2 stars, 3+ hints -> 1 star.
+   A reveal is a full giveaway, so it counts as REVEAL_HINT_COST hints
+   (a single reveal alone drops the run to 1 star). */
+var REVEAL_HINT_COST = 3;
+function starsFor(units){ return units === 0 ? 3 : (units <= 2 ? 2 : 1); }
 
-var STORE_KEY = "commonthread-v4";
+var STORE_KEY = "commonthread-v5";
 
 function blankBest(){ return { easy:[null,null,null,null], medium:[null,null,null,null], hard:[null,null,null,null] }; }
 function loadState(){
@@ -582,16 +591,15 @@ var state = loadState();
 var run = null;          // { tier, index }
 var runPos = 0;          // 0..9 within the run
 var runResults = [];     // per-position: "solved" | "revealed" | null
-var runStartAt = 0;
-var runPenaltyMs = 0;    // accumulated hint/reveal penalties for the whole run
+var runHints = 0;        // hints used across the whole run
+var runReveals = 0;      // answers revealed across the whole run
 var streak = 0;
-var clockTimer = null;
 
 /* ---- per-puzzle ---- */
 var guess = [];
 var locked = [];
 var over = false;
-var hintsUsed = 0;
+var hintsUsed = 0;       // hints on the current puzzle (drives first-letter logic)
 
 var $ = function(id){ return document.getElementById(id); };
 var pathScreen = $("pathScreen"), gameScreen = $("gameScreen"),
@@ -599,10 +607,14 @@ var pathScreen = $("pathScreen"), gameScreen = $("gameScreen"),
     hintBtn = $("hintBtn"), revealBtn = $("revealBtn"), nextBtn = $("nextBtn"),
     dotsEl = $("dots");
 
-function fmtTime(ms){
-  var s = Math.floor(ms / 1000);
-  return Math.floor(s / 60) + ":" + String(s % 60).padStart(2, "0");
+function hintUnits(){ return runHints + REVEAL_HINT_COST * runReveals; }
+function currentStars(){ return starsFor(hintUnits()); }
+function starMarkup(n){
+  var s = "";
+  for (var i = 0; i < 3; i++) s += '<span class="star' + (i < n ? " on" : "") + '">★</span>';
+  return s;
 }
+function renderStars(){ $("stars").innerHTML = starMarkup(currentStars()); }
 
 /* ================= PATH SCREEN ================= */
 function tierCompleted(t){ return state.best[t].filter(function(x){ return x != null; }).length; }
@@ -637,15 +649,15 @@ function renderPath(){
         stone.className = "stone" + (best != null ? " done" : "");
         stone.innerHTML = best != null ? '<span class="check">&#10003;</span>' : (idx + 1);
         stone.setAttribute("aria-label",
-          TIER_LABEL[t] + " round " + (idx + 1) + (best != null ? ", best " + fmtTime(best) : ", not yet played"));
+          TIER_LABEL[t] + " round " + (idx + 1) + (best != null ? ", best " + best + " of 3 stars" : ", not yet played"));
         stone.addEventListener("click", function(){ startRun(t, idx); });
         var label = document.createElement("div");
         label.className = "stone-label";
         label.textContent = "Round " + (idx + 1);
-        var time = document.createElement("div");
-        time.className = "stone-time" + (best != null ? "" : " empty");
-        time.textContent = best != null ? fmtTime(best) : "—";
-        wrap.appendChild(stone); wrap.appendChild(label); wrap.appendChild(time);
+        var stars = document.createElement("div");
+        stars.className = "stone-stars";
+        stars.innerHTML = starMarkup(best != null ? best : 0);
+        wrap.appendChild(stone); wrap.appendChild(label); wrap.appendChild(stars);
         path.appendChild(wrap);
       })(i);
     }
@@ -658,7 +670,6 @@ function renderPath(){
 }
 
 function showPath(){
-  stopClock();
   run = null;
   $("done").classList.remove("show");
   gameScreen.classList.add("hidden");
@@ -671,21 +682,13 @@ function showPath(){
 /* ================= RUN / GAME ================= */
 function runPuzzles(){ return BANK[run.tier].slice(run.index * RUN_LEN, run.index * RUN_LEN + RUN_LEN); }
 function puzzle(){ return runPuzzles()[runPos]; }
-function elapsedMs(){ return (Date.now() - runStartAt) + runPenaltyMs; }
-
-function stopClock(){ if (clockTimer){ clearInterval(clockTimer); clockTimer = null; } }
-function startClock(){
-  stopClock();
-  runStartAt = Date.now();
-  $("clock").textContent = "0:00";
-  clockTimer = setInterval(function(){ $("clock").textContent = fmtTime(elapsedMs()); }, 250);
-}
 
 function startRun(tier, index){
   run = { tier: tier, index: index };
   runPos = 0;
   runResults = new Array(RUN_LEN).fill(null);
-  runPenaltyMs = 0;
+  runHints = 0;
+  runReveals = 0;
   streak = 0;
   pathScreen.classList.add("hidden");
   $("done").classList.remove("show");
@@ -695,8 +698,7 @@ function startRun(tier, index){
   $("dateline").innerHTML = "";
   $("runLabel").textContent = TIER_LABEL[tier] + " · Round " + (index + 1);
   var best = state.best[tier][index];
-  $("best").innerHTML = best != null ? fmtTime(best) : "&mdash;";
-  startClock();
+  $("best").innerHTML = best != null ? starMarkup(best) : "&mdash;";
   loadPuzzle();
 }
 
@@ -712,6 +714,7 @@ function loadPuzzle(){
   nextBtn.style.display = "none";
   revealBtn.disabled = false;
   renderStrip();
+  renderStars();
   renderDots();
   renderClues("play");
   renderAnswer();
@@ -767,11 +770,9 @@ function renderAnswer(){
 
 function setMessage(text, kind){ msgEl.textContent = text || ""; msgEl.className = kind || ""; }
 
-function nextPenaltySec(){ return HINT_PENALTIES[Math.min(hintsUsed, HINT_PENALTIES.length - 1)]; }
 function updateHintBtn(){
   var unrevealed = locked.filter(function(x){ return !x; }).length;
   hintBtn.disabled = unrevealed <= 1;
-  hintBtn.innerHTML = "Hint&nbsp;+" + fmtTime(nextPenaltySec() * 1000);
 }
 
 function firstEmpty(){ for (var i = 0; i < guess.length; i++) if (!locked[i] && !guess[i]) return i; return -1; }
@@ -830,14 +831,14 @@ function reveal(){
   over = true;
   streak = 0;
   runResults[runPos] = "revealed";
-  runPenaltyMs += REVEAL_PENALTY * 1000;
+  runReveals += 1;
   renderStrip();
+  renderStars();
   renderDots();
-  $("clock").textContent = fmtTime(elapsedMs());
   var tiles = answerEl.children, a = puzzle().a;
   for (var i = 0; i < tiles.length; i++){ tiles[i].className = "tile filled given"; tiles[i].textContent = a[i]; }
   renderClues("given");
-  setMessage("The thread was " + a + ".  +1:00", "err");
+  setMessage("The thread was " + a + ".", "err");
   showNext();
 }
 
@@ -859,33 +860,43 @@ function hint(){
   for (var i = 0; i < a.length; i++) if (!locked[i]) spots.push(i);
   if (spots.length <= 1) return;
   /* First hint anchors the word with its first letter; later hints reveal a
-     random remaining letter. Each adds a time penalty; streak is untouched
-     (only a wrong guess breaks a streak). */
+     random remaining letter. Hints count toward the run's star rating;
+     streak is untouched (only a wrong guess breaks a streak). */
   var pick = hintsUsed === 0 && !locked[0] ? 0 : spots[Math.floor(Math.random() * spots.length)];
-  runPenaltyMs += nextPenaltySec() * 1000;
+  runHints += 1;
   hintsUsed += 1;
   locked[pick] = true;
   guess[pick] = null;
-  $("clock").textContent = fmtTime(elapsedMs());
+  renderStars();
   renderAnswer();
   updateHintBtn();
 }
 
 function finishRun(){
-  stopClock();
-  var t = elapsedMs();
+  var stars = currentStars();
   var prev = state.best[run.tier][run.index];
-  var isBest = prev == null || t < prev;
-  if (isBest){ state.best[run.tier][run.index] = t; saveState(); }
+  var isBest = prev == null || stars > prev;
+  if (isBest){ state.best[run.tier][run.index] = stars; saveState(); }
   $("done").setAttribute("data-tier", run.tier);
   $("donePill").textContent = TIER_LABEL[run.tier] + " · Round " + (run.index + 1);
-  var solved = runResults.filter(function(r){ return r === "solved"; }).length;
-  $("doneTitle").textContent = solved === RUN_LEN ? "Clean run!" : "Round complete!";
-  $("doneTime").textContent = fmtTime(t);
+  $("doneTitle").textContent = stars === 3 ? "Flawless!" : (stars === 2 ? "Well threaded!" : "Round complete!");
+  $("doneStars").innerHTML = starMarkup(stars);
+
+  var aid;
+  if (runHints === 0 && runReveals === 0) aid = "No hints used — perfect mastery.";
+  else {
+    var parts = [];
+    if (runHints) parts.push(runHints + (runHints === 1 ? " hint" : " hints"));
+    if (runReveals) parts.push(runReveals + (runReveals === 1 ? " reveal" : " reveals"));
+    aid = parts.join(" · ") + " used.";
+  }
+  var note;
+  if (isBest && prev == null) note = "First rating on the board!";
+  else if (isBest) note = "New best — up from " + prev + " star" + (prev === 1 ? "" : "s") + "!";
+  else note = "Your best stays " + prev + " star" + (prev === 1 ? "" : "s") + ".";
   var bestEl = $("doneBest");
-  if (isBest && prev == null){ bestEl.textContent = solved + " of 10 solved · first time on the board!"; bestEl.className = "new"; }
-  else if (isBest){ bestEl.textContent = solved + " of 10 solved · new best (was " + fmtTime(prev) + ")"; bestEl.className = "new"; }
-  else { bestEl.textContent = solved + " of 10 solved · best stays " + fmtTime(prev); bestEl.className = ""; }
+  bestEl.textContent = aid + " " + note;
+  bestEl.className = isBest ? "new" : "";
   $("done").classList.add("show");
 }
 
