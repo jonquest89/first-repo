@@ -1,0 +1,9 @@
+{
+  "name": "common-thread-tools",
+  "private": true,
+  "type": "module",
+  "description": "Validation tooling for the puzzle bank in index.html",
+  "dependencies": {
+    "word-list": "^4.1.0"
+  }
+}

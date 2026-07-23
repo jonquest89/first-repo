@@ -1,0 +1,1201 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>The Common Thread</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<style>
+  :root{
+    --paper:#F5F4EE;
+    --paper-raised:#FDFCF8;
+    --ink:#1C2033;
+    --ink-soft:#5A5E70;
+    --rule:#C9C7BC;
+    --accent:#2742C9;
+    --accent-ink:#FDFCF8;
+    --gold:#C9930A;
+    --gold-soft:#F3E4BC;
+    --green:#2F7D4F;
+    --green-ink:#FDFCF8;
+    --red:#B23A3A;
+    --tile-empty:#E9E7DE;
+    --key:#FDFCF8;
+    --key-ink:#1C2033;
+    --key-border:#C9C7BC;
+    --shadow:0 1px 2px rgba(28,32,51,.10);
+    /* difficulty colours (traffic-light, drawn from the existing palette) */
+    --easy:#2F7D4F;   --easy-soft:#E3EEE7;
+    --medium:#B8830D; --medium-soft:#F3E8CC;
+    --hard:#B23A3A;   --hard-soft:#F1DEDE;
+  }
+  @media (prefers-color-scheme: dark){
+    :root{
+      --paper:#14161F;
+      --paper-raised:#1E2130;
+      --ink:#ECEAE2;
+      --ink-soft:#9A9DB0;
+      --rule:#383C50;
+      --accent:#7D90F5;
+      --accent-ink:#14161F;
+      --gold:#E3B84A;
+      --gold-soft:#3A3320;
+      --green:#4CAE78;
+      --green-ink:#14161F;
+      --red:#E07A7A;
+      --tile-empty:#262A3B;
+      --key:#2A2E42;
+      --key-ink:#ECEAE2;
+      --key-border:#3B4058;
+      --shadow:0 1px 2px rgba(0,0,0,.35);
+      --easy:#57BC83;   --easy-soft:#1C2A22;
+      --medium:#E3B84A; --medium-soft:#2F2814;
+      --hard:#E88484;   --hard-soft:#2F1D1D;
+    }
+  }
+  :root[data-theme="light"]{
+    --paper:#F5F4EE; --paper-raised:#FDFCF8; --ink:#1C2033; --ink-soft:#5A5E70;
+    --rule:#C9C7BC; --accent:#2742C9; --accent-ink:#FDFCF8; --gold:#C9930A;
+    --gold-soft:#F3E4BC; --green:#2F7D4F; --green-ink:#FDFCF8; --red:#B23A3A;
+    --tile-empty:#E9E7DE; --key:#FDFCF8; --key-ink:#1C2033; --key-border:#C9C7BC;
+    --shadow:0 1px 2px rgba(28,32,51,.10);
+    --easy:#2F7D4F; --easy-soft:#E3EEE7; --medium:#B8830D; --medium-soft:#F3E8CC;
+    --hard:#B23A3A; --hard-soft:#F1DEDE;
+  }
+  :root[data-theme="dark"]{
+    --paper:#14161F; --paper-raised:#1E2130; --ink:#ECEAE2; --ink-soft:#9A9DB0;
+    --rule:#383C50; --accent:#7D90F5; --accent-ink:#14161F; --gold:#E3B84A;
+    --gold-soft:#3A3320; --green:#4CAE78; --green-ink:#14161F; --red:#E07A7A;
+    --tile-empty:#262A3B; --key:#2A2E42; --key-ink:#ECEAE2; --key-border:#3B4058;
+    --shadow:0 1px 2px rgba(0,0,0,.35);
+    --easy:#57BC83; --easy-soft:#1C2A22; --medium:#E3B84A; --medium-soft:#2F2814;
+    --hard:#E88484; --hard-soft:#2F1D1D;
+  }
+
+  /* per-tier: expose one --tier / --tier-soft that children inherit */
+  [data-tier="easy"]{   --tier:var(--easy);   --tier-soft:var(--easy-soft); }
+  [data-tier="medium"]{ --tier:var(--medium); --tier-soft:var(--medium-soft); }
+  [data-tier="hard"]{   --tier:var(--hard);   --tier-soft:var(--hard-soft); }
+
+  *{ box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+  html,body{ height:100%; }
+  body{
+    margin:0;
+    background:var(--paper);
+    color:var(--ink);
+    font-family:-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    display:flex; flex-direction:column; align-items:center;
+    min-height:100dvh;
+    overflow:hidden;
+    touch-action:manipulation;
+  }
+  #app{
+    width:100%; max-width:480px;
+    height:100dvh;
+    display:flex; flex-direction:column;
+    padding:calc(env(safe-area-inset-top, 0px) + 10px) 14px calc(env(safe-area-inset-bottom, 0px) + 10px);
+  }
+  .hidden{ display:none !important; }
+
+  /* ---------- Masthead ---------- */
+  header{
+    text-align:center;
+    border-bottom:3px double var(--rule);
+    padding-bottom:8px;
+    flex:0 0 auto;
+  }
+  .masthead{
+    font-family:"Iowan Old Style", Palatino, "Palatino Linotype", "Book Antiqua", Georgia, serif;
+    font-size:clamp(22px, 6.5vw, 30px);
+    font-weight:700;
+    letter-spacing:.01em;
+    line-height:1.1;
+    margin:0;
+    text-wrap:balance;
+  }
+  .masthead .plus{ color:var(--accent); }
+  .dateline{
+    display:flex; justify-content:center; gap:10px;
+    font-size:10px; letter-spacing:.14em; text-transform:uppercase;
+    color:var(--ink-soft); margin-top:4px;
+    font-variant-numeric:tabular-nums;
+  }
+  .dateline > span + span::before{ content:"·"; margin-right:10px; color:var(--rule); }
+
+  /* ================= PATH SCREEN ================= */
+  #pathScreen{
+    flex:1 1 auto; min-height:0;
+    overflow-y:auto;
+    display:flex; flex-direction:column; gap:10px;
+    padding:12px 2px 4px;
+  }
+  .path-intro{
+    text-align:center; margin:0 0 2px;
+    font-family:"Iowan Old Style", Palatino, Georgia, serif;
+    font-style:italic; color:var(--ink-soft); font-size:14px;
+  }
+  .tier-group{
+    background:var(--paper-raised);
+    border:1px solid var(--rule);
+    border-left:4px solid var(--tier);
+    border-radius:8px;
+    box-shadow:var(--shadow);
+    padding:12px 14px 14px;
+  }
+  .tier-head{ display:flex; align-items:center; gap:10px; }
+  .tier-tag{
+    background:var(--tier); color:#fff;
+    padding:3px 12px; border-radius:999px;
+    font-size:11px; font-weight:800; letter-spacing:.12em; text-transform:uppercase;
+  }
+  .tier-meta{ font-size:11px; color:var(--ink-soft); letter-spacing:.04em;
+    font-variant-numeric:tabular-nums; margin-left:auto; }
+  .path{
+    position:relative;
+    display:flex; justify-content:space-between;
+    padding:14px 8px 2px;
+  }
+  .path::before{ /* the connecting thread */
+    content:""; position:absolute;
+    left:14%; right:14%; top:38px; height:0;
+    border-top:2px dashed var(--tier); opacity:.45;
+  }
+  .stone-wrap{
+    position:relative; z-index:1;
+    display:flex; flex-direction:column; align-items:center; gap:6px;
+    width:24%;
+  }
+  .stone{
+    appearance:none; cursor:pointer;
+    width:48px; height:48px; border-radius:50%;
+    border:2px solid var(--tier); background:var(--paper-raised);
+    color:var(--tier);
+    font-size:16px; font-weight:800;
+    display:flex; align-items:center; justify-content:center;
+    box-shadow:var(--shadow);
+    transition:transform .1s;
+  }
+  .stone .check{ font-size:20px; line-height:1; }
+  .stone.done{ background:var(--tier); color:#fff; border-color:var(--tier); }
+  .stone:active{ transform:translateY(1px) scale(.97); }
+  .stone:focus-visible{ outline:2px solid var(--tier); outline-offset:3px; }
+  .stone-label{ font-size:9px; letter-spacing:.08em; text-transform:uppercase; color:var(--ink-soft); }
+  .stone-stars{ display:flex; gap:1px; min-height:15px; font-size:13px; }
+
+  /* ---------- star rating ---------- */
+  .stars{ display:inline-flex; gap:1px; vertical-align:-1px; }
+  .star{ color:var(--ink-soft); opacity:.28; }
+  .star.on{ color:var(--gold); opacity:1; }
+
+  /* ================= GAME SCREEN ================= */
+  #gameScreen{ flex:1 1 auto; min-height:0; display:flex; flex-direction:column; }
+
+  .run-bar{
+    display:flex; align-items:center; justify-content:space-between;
+    gap:6px; padding:8px 0 4px; flex:0 0 auto;
+  }
+  .run-pill{
+    flex:0 1 auto; min-width:0;
+    white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+    background:var(--tier-soft); color:var(--tier);
+    padding:6px 14px; border-radius:999px;
+    font-size:12px; font-weight:800; letter-spacing:.08em; text-transform:uppercase;
+  }
+  .linkbtn{
+    appearance:none; cursor:pointer; flex:0 0 auto;
+    background:var(--paper-raised); border:1px solid var(--rule);
+    border-radius:999px; box-shadow:var(--shadow);
+    color:var(--ink); font-size:11px; font-weight:700;
+    letter-spacing:.06em; text-transform:uppercase; padding:6px 12px;
+  }
+  .linkbtn:active{ transform:translateY(1px); }
+  .linkbtn.restart{ color:var(--hard); border-color:var(--hard); }
+  .linkbtn:focus-visible{ outline:2px solid var(--accent); outline-offset:2px; }
+
+  .dots{ display:flex; justify-content:center; gap:7px; padding:6px 0 2px; flex:0 0 auto; }
+  .dot{
+    width:10px; height:10px; border-radius:50%;
+    border:1.5px solid var(--tier); background:transparent; opacity:.3;
+    transition:opacity .2s, box-shadow .2s;
+  }
+  .dot.done{ background:var(--tier); opacity:1; }
+  .dot.revealed{ background:transparent; opacity:.85; }
+  .dot.current{ opacity:1; box-shadow:0 0 0 3px var(--tier-soft); }
+
+  .strip{
+    display:flex; justify-content:space-between; align-items:center;
+    padding:6px 2px 4px;
+    font-size:11px; color:var(--ink-soft);
+    letter-spacing:.06em; text-transform:uppercase;
+    font-variant-numeric:tabular-nums;
+    flex:0 0 auto;
+  }
+  .strip b{ color:var(--ink); font-size:14px; letter-spacing:0; }
+  .strip .streak-on b{ color:var(--gold); }
+
+  /* ---------- hint mastery meter ---------- */
+  .meter{ display:flex; flex-direction:column; align-items:center; gap:4px; }
+  .meter-stars{ font-size:17px; line-height:1; }
+  .meter-bar{
+    width:108px; height:6px; border-radius:3px;
+    background:var(--tile-empty); overflow:hidden;
+  }
+  .meter-fill{
+    height:100%; width:100%; border-radius:3px;
+    background:var(--gold);
+    transition:width .35s ease;
+  }
+  @keyframes starbreak{
+    0%{ transform:scale(1) rotate(0); color:var(--gold); opacity:1; }
+    30%{ transform:scale(1.25) rotate(-10deg); }
+    60%{ transform:scale(1) rotate(6deg); }
+    100%{ transform:scale(1) rotate(0); color:var(--ink-soft); opacity:.28; }
+  }
+  .meter-stars .star.breaking{ animation:starbreak .55s ease both; }
+
+  main{
+    flex:1 1 auto; min-height:0;
+    display:flex; flex-direction:column; justify-content:space-evenly;
+    gap:3px;
+  }
+  .prompt{
+    text-align:center; font-size:13px; color:var(--ink-soft);
+    font-style:italic;
+    font-family:"Iowan Old Style", Palatino, Georgia, serif;
+    margin:0;
+  }
+  #clues{ display:flex; flex-direction:column; gap:7px; }
+  .clue{
+    background:var(--paper-raised);
+    border:1px solid var(--rule);
+    border-radius:6px;
+    box-shadow:var(--shadow);
+    padding:9px 12px;
+    display:flex; align-items:center; justify-content:center; gap:8px;
+    font-size:clamp(17px, 5vw, 22px);
+    font-weight:600;
+    letter-spacing:.04em;
+  }
+  .clue .word{ text-transform:uppercase; }
+  .clue .slot{
+    display:inline-flex; align-items:center; justify-content:center;
+    min-width:1.5em; height:1.5em;
+    padding:0 .3em;
+    border-radius:5px;
+    background:var(--accent);
+    color:var(--accent-ink);
+    font-size:.85em;
+    font-weight:800;
+    transition:background .3s;
+  }
+  .clue.solved .slot{ background:var(--green); color:var(--green-ink); }
+  .clue.given .slot{ background:var(--hard); color:#fff; }
+
+  #answer{ display:flex; justify-content:center; gap:6px; padding:2px 0; }
+  .tile{
+    width:clamp(34px, 10.5vw, 50px);
+    aspect-ratio:1;
+    border-radius:6px;
+    background:var(--tile-empty);
+    border:2px solid transparent;
+    display:flex; align-items:center; justify-content:center;
+    font-size:clamp(19px, 5.5vw, 26px);
+    font-weight:800;
+    text-transform:uppercase;
+    color:var(--ink);
+    transition:transform .12s, background .2s, border-color .2s;
+  }
+  .tile.filled{ border-color:var(--ink-soft); background:var(--paper-raised); transform:scale(1.04); }
+  .tile.hinted{ background:var(--gold-soft); border-color:var(--gold); color:var(--gold); }
+  .tile.correct{ background:var(--green); border-color:var(--green); color:var(--green-ink); }
+  .tile.given{ background:var(--paper-raised); border-color:var(--hard); color:var(--hard); }
+  @keyframes flip{
+    0%{ transform:rotateX(0); } 50%{ transform:rotateX(90deg); } 100%{ transform:rotateX(0); }
+  }
+  .tile.flip{ animation:flip .45s ease both; }
+  @keyframes shake{
+    0%,100%{ transform:translateX(0); }
+    20%{ transform:translateX(-6px); } 40%{ transform:translateX(6px); }
+    60%{ transform:translateX(-4px); } 80%{ transform:translateX(4px); }
+  }
+  #answer.shake{ animation:shake .4s ease; }
+  @media (prefers-reduced-motion: reduce){
+    .tile.flip, #answer.shake, #doneStars .star.on, .meter-stars .star.breaking,
+    .finale-stars .star{ animation:none; }
+    .tile.filled{ transform:none; }
+    .meter-fill{ transition:none; }
+  }
+
+  #message{ text-align:center; min-height:20px; font-size:14px; font-weight:600; }
+  #message.win{ color:var(--green); }
+  #message.err{ color:var(--red); }
+  .actions{ display:flex; justify-content:center; gap:10px; flex:0 0 auto; }
+  .btn{
+    appearance:none; border:1px solid var(--rule);
+    background:var(--paper-raised); color:var(--ink);
+    border-radius:999px;
+    padding:9px 18px;
+    font-size:12px; font-weight:700;
+    letter-spacing:.08em; text-transform:uppercase;
+    cursor:pointer;
+    box-shadow:var(--shadow);
+  }
+  .btn:active{ transform:translateY(1px); }
+  .btn:focus-visible, .key:focus-visible, .stone:focus-visible{ outline:2px solid var(--accent); outline-offset:2px; }
+  .btn.hint{ color:var(--gold); border-color:var(--gold); }
+  .btn.reveal{ color:var(--hard); border-color:var(--hard); }
+  .btn.primary{ background:var(--accent); color:var(--accent-ink); border-color:var(--accent); }
+  .btn.submit{ flex:1 1 auto; padding-top:12px; padding-bottom:12px; font-size:13px; letter-spacing:.12em; }
+  .btn[disabled]{ opacity:.4; cursor:default; }
+
+  #keyboard{
+    flex:0 0 auto;
+    display:flex; flex-direction:column; gap:6px;
+    padding-top:8px;
+    user-select:none; -webkit-user-select:none;
+  }
+  .krow{ display:flex; justify-content:center; gap:5px; }
+  .key{
+    appearance:none; border:1px solid var(--key-border);
+    background:var(--key); color:var(--key-ink);
+    border-radius:5px;
+    flex:1 1 0; max-width:42px;
+    height:46px;
+    font-size:16px; font-weight:700;
+    text-transform:uppercase;
+    cursor:pointer;
+    box-shadow:var(--shadow);
+    display:flex; align-items:center; justify-content:center;
+    padding:0;
+  }
+  .key.wide{ max-width:66px; flex:1.6 1 0; font-size:12px; letter-spacing:.05em; }
+  .key:active{ background:var(--tile-empty); transform:translateY(1px); }
+  .key.spacer{ visibility:hidden; box-shadow:none; pointer-events:none; }
+
+  /* ---------- Run-complete overlay ---------- */
+  #done{
+    position:fixed; inset:0;
+    background:var(--paper);
+    display:none;
+    flex-direction:column; align-items:center; justify-content:center;
+    gap:12px; text-align:center; padding:24px;
+  }
+  #done.show{ display:flex; }
+  #done .done-pill{
+    background:var(--tier-soft); color:var(--tier);
+    padding:5px 16px; border-radius:999px;
+    font-size:12px; font-weight:800; letter-spacing:.1em; text-transform:uppercase;
+  }
+  #done h2{
+    font-family:"Iowan Old Style", Palatino, Georgia, serif;
+    font-size:30px; margin:0;
+  }
+  #doneStars{ gap:10px; font-size:52px; line-height:1; margin:2px 0; }
+  #doneStars .star.on{ animation:starpop .45s ease both; }
+  #doneStars .star.on:nth-child(2){ animation-delay:.12s; }
+  #doneStars .star.on:nth-child(3){ animation-delay:.24s; }
+  @keyframes starpop{ 0%{ transform:scale(.2); opacity:0; } 65%{ transform:scale(1.25); } 100%{ transform:scale(1); opacity:1; } }
+  #done p{ color:var(--ink-soft); max-width:36ch; margin:0; line-height:1.5; }
+  #doneBest{ font-weight:700; }
+  #doneBest.new{ color:var(--gold); }
+  #done .actions{ flex-wrap:wrap; margin-top:6px; }
+
+  /* ---------- finale (100% mastery) ---------- */
+  #finale{ position:fixed; inset:0; z-index:20; background:var(--paper); display:none; overflow:hidden; }
+  #finale.show{ display:block; }
+  #confetti{ position:absolute; inset:0; width:100%; height:100%; pointer-events:none; }
+  .finale-inner{
+    position:relative; z-index:1;
+    height:100%; box-sizing:border-box;
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+    gap:16px; text-align:center; padding:28px 22px;
+    max-width:480px; margin:0 auto;
+  }
+  .finale-eyebrow{ font-size:11px; letter-spacing:.22em; text-transform:uppercase; color:var(--ink-soft); }
+  .finale-title{
+    font-family:"Iowan Old Style", Palatino, Georgia, serif;
+    font-size:clamp(30px, 9vw, 42px); line-height:1.05; margin:0; text-wrap:balance;
+    color:var(--gold);
+  }
+  @supports ((-webkit-background-clip:text) or (background-clip:text)){
+    .finale-title{
+      background:linear-gradient(100deg, var(--gold), #E7C766 45%, var(--gold));
+      -webkit-background-clip:text; background-clip:text; color:transparent;
+    }
+  }
+  .finale-stars{ display:flex; gap:12px; font-size:clamp(40px, 13vw, 60px); line-height:1; color:var(--gold); }
+  .finale-stars .star{ color:var(--gold); opacity:1; animation:starpop .5s ease both; }
+  .finale-stars .star:nth-child(2){ animation-delay:.15s; }
+  .finale-stars .star:nth-child(3){ animation-delay:.3s; }
+  .finale-sub{ color:var(--ink-soft); max-width:34ch; margin:0; line-height:1.5; font-size:14px; }
+  .finale-grid{ display:flex; flex-direction:column; gap:8px; width:100%; max-width:300px; }
+  .finale-row{ display:flex; align-items:center; gap:10px; }
+  .finale-dots{ display:flex; gap:6px; margin-left:auto; }
+  .finale-dot{
+    width:18px; height:18px; border-radius:50%;
+    background:var(--tier); color:#fff;
+    display:flex; align-items:center; justify-content:center; font-size:11px;
+  }
+
+  /* ---------- master banner on the path ---------- */
+  .master-banner{
+    appearance:none; cursor:pointer; width:100%;
+    display:flex; align-items:center; gap:10px;
+    background:linear-gradient(100deg, var(--gold-soft), var(--paper-raised));
+    border:1px solid var(--gold); border-radius:10px;
+    padding:11px 14px; box-shadow:var(--shadow);
+    color:var(--ink); font-weight:800; font-size:13px; letter-spacing:.03em;
+  }
+  .master-banner .mb-stars{ color:var(--gold); letter-spacing:2px; }
+  .master-banner .mb-cta{ margin-left:auto; font-size:10px; text-transform:uppercase; letter-spacing:.1em; color:var(--gold); }
+  .master-banner:active{ transform:translateY(1px); }
+  .master-banner:focus-visible{ outline:2px solid var(--gold); outline-offset:2px; }
+</style>
+
+</head>
+<body>
+<div id="app">
+  <header>
+    <h1 class="masthead">The Common<span class="plus"> + </span>Thread</h1>
+    <div class="dateline" id="dateline"><span>Est. 2026</span></div>
+  </header>
+
+  <!-- ============ PATH / ROUND SELECT ============ -->
+  <section id="pathScreen">
+    <p class="path-intro">Twelve rounds, ten puzzles each. Solve hint-free for three stars.</p>
+    <!-- tier groups injected here -->
+  </section>
+
+  <!-- ============ GAME ============ -->
+  <section id="gameScreen" class="hidden">
+    <div class="run-bar">
+      <button class="linkbtn" id="backBtn">&lsaquo;&nbsp;Rounds</button>
+      <span class="run-pill" id="runLabel">Easy · Round 1</span>
+      <button class="linkbtn restart" id="restartBtn">Restart</button>
+    </div>
+    <div class="dots" id="dots" aria-label="Run progress"></div>
+    <div class="strip">
+      <span class="streak-wrap">Streak <b id="streak">0</b></span>
+      <div class="meter" aria-label="Hint mastery">
+        <div class="meter-stars stars" id="meterStars"></div>
+        <div class="meter-bar"><div class="meter-fill" id="meterFill"></div></div>
+      </div>
+      <span>Best <b id="best" class="stars">&mdash;</b></span>
+    </div>
+    <main>
+      <p class="prompt">One word completes all three&hellip;</p>
+      <div id="clues" aria-live="polite"></div>
+      <div id="answer" aria-label="Your answer"></div>
+      <div id="message" role="status"></div>
+      <div class="actions">
+        <button class="btn hint" id="hintBtn">Hint</button>
+        <button class="btn reveal" id="revealBtn">Reveal</button>
+        <button class="btn primary submit" id="submitBtn">Submit</button>
+        <button class="btn primary" id="nextBtn" style="display:none">Next&nbsp;&rarr;</button>
+      </div>
+    </main>
+    <div id="keyboard" aria-label="Keyboard"></div>
+  </section>
+</div>
+
+<!-- ============ RUN COMPLETE ============ -->
+<div id="done">
+  <span class="done-pill" id="donePill">Easy · Round 1</span>
+  <h2 id="doneTitle">Round complete!</h2>
+  <div id="doneStars" class="stars"></div>
+  <p id="doneBest"></p>
+  <div class="actions">
+    <button class="btn" id="againBtn">Run again</button>
+    <button class="btn primary" id="toPathBtn">Rounds &rarr;</button>
+  </div>
+</div>
+
+<!-- ============ FINALE (all 12 runs 3-starred) ============ -->
+<div id="finale">
+  <canvas id="confetti"></canvas>
+  <div class="finale-inner">
+    <div class="finale-eyebrow">Final Edition · Est. 2026</div>
+    <h2 class="finale-title">Master of the Thread</h2>
+    <div class="finale-stars"><span class="star">★</span><span class="star">★</span><span class="star">★</span></div>
+    <p class="finale-sub">All twelve rounds cleared at three stars — thirty-six in all, and not a hint out of place.</p>
+    <div class="finale-grid" id="finaleGrid"></div>
+    <button class="btn primary" id="finaleClose">Back to rounds</button>
+  </div>
+</div>
+
+<script>
+(function(){
+"use strict";
+
+/* Each puzzle: a = answer, d = difficulty tier, c = three [clueWord, side]
+   pairs. side "before" = clue word comes before the answer (GOAT+),
+   side "after" = clue word comes after the answer (+STICK).
+   The bank is validated by tools/validate-puzzles.mjs (structure +
+   dictionary collision scan). Run it after editing this list. */
+var PUZZLES = [
+  { a:"CHEESE", d:"easy", c:[["STICK","after"],["GOAT","before"],["WHEEL","after"]] },
+  { a:"FIRE",   d:"easy", c:[["CAMP","before"],["WORKS","after"],["FLY","after"]] },
+  { a:"WATER",  d:"easy", c:[["FALL","after"],["SALT","before"],["MELON","after"]] },
+  { a:"SUN",    d:"easy", c:[["FLOWER","after"],["SCREEN","after"],["RISE","after"]] },
+  { a:"BOOK",   d:"easy", c:[["NOTE","before"],["WORM","after"],["SHELF","after"]] },
+  { a:"LIGHT",  d:"easy", c:[["FLASH","before"],["MOON","before"],["HOUSE","after"]] },
+  { a:"BALL",   d:"easy", c:[["BASKET","before"],["EYE","before"],["PARK","after"]] },
+  { a:"SNOW",   d:"easy", c:[["MAN","after"],["FLAKE","after"],["STORM","after"]] },
+  { a:"DOG",    d:"easy", c:[["HOT","before"],["WATCH","before"],["HOUSE","after"]] },
+  { a:"RAIN",   d:"easy", c:[["BOW","after"],["COAT","after"],["FOREST","after"]] },
+  { a:"STAR",   d:"easy", c:[["FISH","after"],["ROCK","before"],["SHOOTING","before"]] },
+  { a:"CAKE",   d:"easy", c:[["CUP","before"],["PAN","before"],["BIRTHDAY","before"]] },
+  { a:"HORSE",  d:"easy", c:[["SEA","before"],["SHOE","after"],["POWER","after"]] },
+  { a:"BOARD",  d:"easy", c:[["SKATE","before"],["KEY","before"],["SURF","before"]] },
+  { a:"HOUSE",  d:"easy", c:[["BIRD","before"],["GREEN","before"],["PLANT","after"]] },
+  { a:"BOX",    d:"easy", c:[["SAND","before"],["MAIL","before"],["LUNCH","before"]] },
+  { a:"PAPER",  d:"easy", c:[["NEWS","before"],["WALL","before"],["CLIP","after"]] },
+  { a:"BED",    d:"easy", c:[["TIME","after"],["ROOM","after"],["BUNK","before"]] },
+  { a:"MOON",   d:"easy", c:[["HONEY","before"],["FULL","before"],["WALK","after"]] },
+  { a:"FISH",   d:"easy", c:[["JELLY","before"],["GOLD","before"],["HOOK","after"]] },
+  { a:"BUG",    d:"easy", c:[["BED","before"],["LADY","before"],["LIGHTNING","before"]] },
+  { a:"CAR",    d:"easy", c:[["WASH","after"],["RACE","before"],["SEAT","after"]] },
+  { a:"TREE",   d:"easy", c:[["HOUSE","after"],["PALM","before"],["FAMILY","before"]] },
+  { a:"BEE",    d:"easy", c:[["HONEY","before"],["BUMBLE","before"],["SPELLING","before"]] },
+  { a:"MILK",   d:"easy", c:[["SHAKE","after"],["BUTTER","before"],["COCONUT","before"]] },
+  { a:"SHIP",   d:"easy", c:[["FRIEND","before"],["WRECK","after"],["SPACE","before"]] },
+  { a:"RING",   d:"easy", c:[["EAR","before"],["TONE","after"],["BOXING","before"]] },
+  { a:"NUT",    d:"easy", c:[["PEA","before"],["DOUGH","before"],["COCO","before"]] },
+  { a:"CORN",   d:"easy", c:[["POP","before"],["BREAD","after"],["CANDY","before"]] },
+  { a:"BERRY",  d:"easy", c:[["BLUE","before"],["STRAW","before"],["RASP","before"]] },
+  { a:"ROOM",   d:"easy", c:[["BATH","before"],["CLASS","before"],["MUSH","before"]] },
+  { a:"MAN",    d:"easy", c:[["SNOW","before"],["SUPER","before"],["HOLE","after"]] },
+  { a:"SHOE",   d:"easy", c:[["LACE","after"],["BOX","after"],["HORSE","before"]] },
+  { a:"POP",    d:"easy", c:[["CORN","after"],["SODA","before"],["QUIZ","after"]] },
+  { a:"BATH",   d:"easy", c:[["TUB","after"],["ROBE","after"],["BUBBLE","before"]] },
+  { a:"NIGHT",  d:"easy", c:[["MARE","after"],["MID","before"],["OVER","before"]] },
+  { a:"TOOTH",  d:"easy", c:[["BRUSH","after"],["PASTE","after"],["SWEET","before"]] },
+  { a:"HAIR",   d:"easy", c:[["CUT","after"],["DRYER","after"],["STYLE","after"]] },
+  { a:"DOOR",   d:"easy", c:[["BELL","after"],["KNOB","after"],["FRONT","before"]] },
+  { a:"APPLE",  d:"easy", c:[["SAUCE","after"],["PIE","after"],["PINE","before"]] },
+
+  { a:"POT",    d:"medium", c:[["JACK","before"],["TEA","before"],["HOLE","after"]] },
+  { a:"HAND",   d:"medium", c:[["SHAKE","after"],["SECOND","before"],["BAG","after"]] },
+  { a:"EYE",    d:"medium", c:[["BROW","after"],["RED","before"],["LASH","after"]] },
+  { a:"HEAD",   d:"medium", c:[["ACHE","after"],["FORE","before"],["LINE","after"]] },
+  { a:"FOOT",   d:"medium", c:[["PRINT","after"],["STEP","after"],["BALL","after"]] },
+  { a:"TABLE",  d:"medium", c:[["SPOON","after"],["TIME","before"],["CLOTH","after"]] },
+  { a:"AIR",    d:"medium", c:[["PORT","after"],["PLANE","after"],["TIGHT","after"]] },
+  { a:"SIDE",   d:"medium", c:[["KICK","after"],["ROAD","before"],["WALK","after"]] },
+  { a:"LAND",   d:"medium", c:[["SLIDE","after"],["MARK","after"],["MAIN","before"]] },
+  { a:"WOOD",   d:"medium", c:[["DRIFT","before"],["PECKER","after"],["HOLLY","before"]] },
+  { a:"STONE",  d:"medium", c:[["LIME","before"],["WALL","after"],["MILE","before"]] },
+  { a:"BREAD",  d:"medium", c:[["GINGER","before"],["CRUMB","after"],["SHORT","before"]] },
+  { a:"PLAY",   d:"medium", c:[["GROUND","after"],["HORSE","before"],["TIME","after"]] },
+  { a:"GRASS",  d:"medium", c:[["HOPPER","after"],["LEMON","before"],["CRAB","before"]] },
+  { a:"WORK",   d:"medium", c:[["HOME","before"],["OUT","after"],["TEAM","before"]] },
+  { a:"LINE",   d:"medium", c:[["CLOTHES","before"],["PUNCH","before"],["FINISH","before"]] },
+  { a:"WATCH",  d:"medium", c:[["WRIST","before"],["TOWER","after"],["STOP","before"]] },
+  { a:"WALK",   d:"medium", c:[["BOARD","before"],["JAY","before"],["MOON","before"]] },
+  { a:"STORM",  d:"medium", c:[["BRAIN","before"],["THUNDER","before"],["CLOUD","after"]] },
+  { a:"PACK",   d:"medium", c:[["BACK","before"],["RAT","after"],["SIX","before"]] },
+  { a:"YARD",   d:"medium", c:[["BACK","before"],["STICK","after"],["COURT","before"]] },
+  { a:"GROUND", d:"medium", c:[["UNDER","before"],["CAMP","before"],["HOG","after"]] },
+  { a:"LOCK",   d:"medium", c:[["SMITH","after"],["PAD","before"],["DOWN","after"]] },
+  { a:"BOW",    d:"medium", c:[["RAIN","before"],["TIE","after"],["CROSS","before"]] },
+  { a:"WORM",   d:"medium", c:[["EARTH","before"],["SILK","before"],["TAPE","before"]] },
+  { a:"SEAT",   d:"medium", c:[["BELT","after"],["BACK","before"],["WINDOW","before"]] },
+  { a:"GLASS",  d:"medium", c:[["HOUR","before"],["WINE","before"],["MAGNIFYING","before"]] },
+  { a:"COAT",   d:"medium", c:[["OVER","before"],["TURN","before"],["HANGER","after"]] },
+  { a:"PRINT",  d:"medium", c:[["FINGER","before"],["BLUE","before"],["NEWS","before"]] },
+  { a:"BONE",   d:"medium", c:[["FUNNY","before"],["WISH","before"],["JAW","before"]] },
+  { a:"TAIL",   d:"medium", c:[["GATE","after"],["PONY","before"],["SPIN","after"]] },
+  { a:"CHAIR",  d:"medium", c:[["ARM","before"],["HIGH","before"],["WHEEL","before"]] },
+  { a:"STICK",  d:"medium", c:[["CHOP","before"],["LIP","before"],["DRUM","before"]] },
+  { a:"PIT",    d:"medium", c:[["FIRE","before"],["STOP","after"],["BULL","after"]] },
+  { a:"SAND",   d:"medium", c:[["CASTLE","after"],["PAPER","after"],["QUICK","before"]] },
+  { a:"GUARD",  d:"medium", c:[["BODY","before"],["LIFE","before"],["RAIL","after"]] },
+  { a:"PROOF",  d:"medium", c:[["BULLET","before"],["FOOL","before"],["WATER","before"]] },
+  { a:"BRUSH",  d:"medium", c:[["PAINT","before"],["HAIR","before"],["FIRE","after"]] },
+  { a:"SHELL",  d:"medium", c:[["SEA","before"],["EGG","before"],["NUT","before"]] },
+  { a:"WIND",   d:"medium", c:[["MILL","after"],["SHIELD","after"],["WHIRL","before"]] },
+
+  { a:"BREAK",  d:"hard", c:[["FAST","after"],["DAY","before"],["OUT","before"]] },
+  { a:"CHECK",  d:"hard", c:[["MATE","after"],["RAIN","before"],["PAY","before"]] },
+  { a:"DOUBLE", d:"hard", c:[["CROSS","after"],["TAKE","after"],["BODY","before"]] },
+  { a:"COLD",   d:"hard", c:[["SHOULDER","after"],["FRONT","after"],["TURKEY","after"]] },
+  { a:"FREE",   d:"hard", c:[["CARE","before"],["FALL","after"],["STYLE","after"]] },
+  { a:"JACK",   d:"hard", c:[["POT","after"],["LUMBER","before"],["FLAP","before"]] },
+  { a:"POCKET", d:"hard", c:[["KNIFE","after"],["PICK","before"],["BOOK","after"]] },
+  { a:"PITCH",  d:"hard", c:[["FORK","after"],["SALES","before"],["BLACK","after"]] },
+  { a:"SPELL",  d:"hard", c:[["BOUND","after"],["CHECK","after"],["DRY","before"]] },
+  { a:"DRAW",   d:"hard", c:[["BRIDGE","after"],["BACK","after"],["WITH","before"]] },
+  { a:"CROSS",  d:"hard", c:[["WORD","after"],["ROADS","after"],["MOTO","before"]] },
+  { a:"SHOT",   d:"hard", c:[["MUG","before"],["LONG","before"],["SLING","before"]] },
+  { a:"TRAP",   d:"hard", c:[["MOUSE","before"],["DOOR","after"],["TOURIST","before"]] },
+  { a:"RUN",    d:"hard", c:[["HOME","before"],["WAY","after"],["OFF","after"]] },
+  { a:"MARK",   d:"hard", c:[["TRADE","before"],["BENCH","before"],["QUESTION","before"]] },
+  { a:"WISE",   d:"hard", c:[["CLOCK","before"],["CRACK","after"],["STREET","before"]] },
+  { a:"STAND",  d:"hard", c:[["GRAND","before"],["NEWS","before"],["STILL","after"]] },
+  { a:"TALK",   d:"hard", c:[["SMALL","before"],["PEP","before"],["SHOW","after"]] },
+  { a:"LIFE",   d:"hard", c:[["WILD","before"],["NIGHT","before"],["SHELF","before"]] },
+  { a:"TIME",   d:"hard", c:[["LIFE","before"],["OVER","before"],["ZONE","after"]] },
+  { a:"POINT",  d:"hard", c:[["PIN","before"],["BLANK","after"],["VIEW","before"]] },
+  { a:"CUT",    d:"hard", c:[["SHORT","before"],["BACK","after"],["PAPER","before"]] },
+  { a:"TRACK",  d:"hard", c:[["SUIT","after"],["SOUND","before"],["SIDE","before"]] },
+  { a:"WHEEL",  d:"hard", c:[["BARROW","after"],["FERRIS","before"],["CART","before"]] },
+  { a:"NECK",   d:"hard", c:[["BOTTLE","before"],["TURTLE","before"],["LACE","after"]] },
+  { a:"SLIP",   d:"hard", c:[["KNOT","after"],["PINK","before"],["COVER","after"]] },
+  { a:"SPIN",   d:"hard", c:[["OFF","after"],["TAIL","before"],["CYCLE","after"]] },
+  { a:"STRING", d:"hard", c:[["SHOE","before"],["BEAN","after"],["HAM","before"]] },
+  { a:"BELT",   d:"hard", c:[["CONVEYOR","before"],["BLACK","before"],["SEAT","before"]] },
+  { a:"CHIP",   d:"hard", c:[["MUNK","after"],["POKER","before"],["BLUE","before"]] },
+  { a:"DRESS",  d:"hard", c:[["SUN","before"],["HEAD","before"],["REHEARSAL","after"]] },
+  { a:"MATCH",  d:"hard", c:[["BOX","after"],["MAKER","after"],["TENNIS","before"]] },
+  { a:"PICK",   d:"hard", c:[["TOOTH","before"],["NIT","before"],["ICE","before"]] },
+  { a:"PLANT",  d:"hard", c:[["POWER","before"],["EGG","before"],["HOUSE","before"]] },
+  { a:"SCREEN", d:"hard", c:[["SAVER","after"],["SMOKE","before"],["TOUCH","before"]] },
+  { a:"WASH",   d:"hard", c:[["BRAIN","before"],["CLOTH","after"],["MOUTH","before"]] },
+  { a:"TIP",    d:"hard", c:[["TOE","after"],["FINGER","before"],["OFF","after"]] },
+  { a:"HORN",   d:"hard", c:[["FOG","before"],["LONG","before"],["SHOE","before"]] },
+  { a:"WEIGHT", d:"hard", c:[["PAPER","before"],["HEAVY","before"],["LIFTING","after"]] },
+  { a:"FALL",   d:"hard", c:[["NIGHT","before"],["PIT","before"],["OUT","after"]] }
+];
+
+var TIER_ORDER = ["easy", "medium", "hard"];
+var TIER_LABEL = { easy:"Easy", medium:"Medium", hard:"Hard" };
+var RUNS_PER_TIER = 4, RUN_LEN = 10;
+var BANK = { easy:[], medium:[], hard:[] };
+PUZZLES.forEach(function(p){ BANK[p.d].push(p); });
+
+/* Star rating for a run, by hints used across all 10 puzzles:
+   0 hints -> 3 stars, 1-2 hints -> 2 stars, 3+ hints -> 1 star.
+   A reveal is a full giveaway, so it counts as REVEAL_HINT_COST hints
+   (a single reveal alone drops the run to 1 star). */
+var REVEAL_HINT_COST = 3;
+function starsFor(units){ return units === 0 ? 3 : (units <= 2 ? 2 : 1); }
+
+var STORE_KEY = "commonthread-v5";
+
+function blankBest(){ return { easy:[null,null,null,null], medium:[null,null,null,null], hard:[null,null,null,null] }; }
+function loadState(){
+  try{
+    var s = JSON.parse(localStorage.getItem(STORE_KEY));
+    if (s && s.best && s.best.easy && s.best.medium && s.best.hard) return s;
+  }catch(e){}
+  return { best: blankBest() };
+}
+function saveState(){
+  try{ localStorage.setItem(STORE_KEY, JSON.stringify(state)); }catch(e){}
+}
+var state = loadState();
+
+/* ---- active run (ephemeral; a reload returns you to the path) ---- */
+var run = null;          // { tier, index }
+var runPos = 0;          // 0..9 within the run
+var runResults = [];     // per-position: "solved" | "revealed" | null
+var runHints = 0;        // hints used across the whole run
+var runReveals = 0;      // answers revealed across the whole run
+var streak = 0;
+
+/* ---- per-puzzle ---- */
+var guess = [];
+var locked = [];
+var over = false;
+var hintsUsed = 0;       // hints on the current puzzle (drives first-letter logic)
+
+var $ = function(id){ return document.getElementById(id); };
+var pathScreen = $("pathScreen"), gameScreen = $("gameScreen"),
+    cluesEl = $("clues"), answerEl = $("answer"), msgEl = $("message"),
+    hintBtn = $("hintBtn"), revealBtn = $("revealBtn"),
+    submitBtn = $("submitBtn"), nextBtn = $("nextBtn"),
+    dotsEl = $("dots");
+
+function hintUnits(){ return runHints + REVEAL_HINT_COST * runReveals; }
+function currentStars(){ return starsFor(hintUnits()); }
+function starMarkup(n){
+  var s = "";
+  for (var i = 0; i < 3; i++) s += '<span class="star' + (i < n ? " on" : "") + '">★</span>';
+  return s;
+}
+
+/* Mastery meter: three stars over a bar that starts full and loses a third
+   with each hint (a reveal counts as REVEAL_HINT_COST hints). Stars break as
+   the run's star rating drops; the star that just broke gets a shake+fade. */
+var prevStars = 3;
+function renderMeter(animate){
+  var stars = currentStars();
+  var used = Math.min(hintUnits(), 3);
+  $("meterFill").style.width = ((3 - used) / 3 * 100) + "%";
+  var host = $("meterStars");
+  host.innerHTML = "";
+  for (var i = 0; i < 3; i++){
+    var s = document.createElement("span");
+    s.className = "star" + (i < stars ? " on" : "");
+    if (animate && i >= stars && i < prevStars) s.className += " breaking";
+    s.textContent = "★";
+    host.appendChild(s);
+  }
+  prevStars = stars;
+}
+
+/* ================= PATH SCREEN ================= */
+function tierCompleted(t){ return state.best[t].filter(function(x){ return x != null; }).length; }
+function allMastered(){
+  return TIER_ORDER.every(function(t){ return state.best[t].every(function(s){ return s === 3; }); });
+}
+
+function renderPath(){
+  var frag = document.createDocumentFragment();
+  TIER_ORDER.forEach(function(t){
+    var group = document.createElement("div");
+    group.className = "tier-group";
+    group.setAttribute("data-tier", t);
+
+    var head = document.createElement("div");
+    head.className = "tier-head";
+    var tag = document.createElement("span");
+    tag.className = "tier-tag";
+    tag.textContent = TIER_LABEL[t];
+    var meta = document.createElement("span");
+    meta.className = "tier-meta";
+    meta.textContent = tierCompleted(t) + " / " + RUNS_PER_TIER + " cleared";
+    head.appendChild(tag); head.appendChild(meta);
+    group.appendChild(head);
+
+    var path = document.createElement("div");
+    path.className = "path";
+    for (var i = 0; i < RUNS_PER_TIER; i++){
+      (function(idx){
+        var wrap = document.createElement("div");
+        wrap.className = "stone-wrap";
+        var best = state.best[t][idx];
+        var stone = document.createElement("button");
+        stone.type = "button";
+        stone.className = "stone" + (best != null ? " done" : "");
+        stone.innerHTML = best != null ? '<span class="check">&#10003;</span>' : (idx + 1);
+        stone.setAttribute("aria-label",
+          TIER_LABEL[t] + " round " + (idx + 1) + (best != null ? ", best " + best + " of 3 stars" : ", not yet played"));
+        stone.addEventListener("click", function(){ startRun(t, idx); });
+        var label = document.createElement("div");
+        label.className = "stone-label";
+        label.textContent = "Round " + (idx + 1);
+        var stars = document.createElement("div");
+        stars.className = "stone-stars";
+        stars.innerHTML = starMarkup(best != null ? best : 0);
+        wrap.appendChild(stone); wrap.appendChild(label); wrap.appendChild(stars);
+        path.appendChild(wrap);
+      })(i);
+    }
+    group.appendChild(path);
+    frag.appendChild(group);
+  });
+  // clear old groups (keep the intro paragraph)
+  Array.prototype.slice.call(pathScreen.querySelectorAll(".tier-group")).forEach(function(n){ n.remove(); });
+  pathScreen.appendChild(frag);
+  renderMasterBanner();
+}
+
+/* A persistent replay banner once every round is 3-starred. */
+function renderMasterBanner(){
+  var existing = pathScreen.querySelector(".master-banner");
+  if (existing) existing.remove();
+  if (!allMastered()) return;
+  var b = document.createElement("button");
+  b.type = "button";
+  b.className = "master-banner";
+  b.innerHTML = '<span class="mb-stars">★★★</span> Master of the Thread' +
+                '<span class="mb-cta">Replay finale</span>';
+  b.addEventListener("click", showFinale);
+  pathScreen.querySelector(".path-intro").insertAdjacentElement("afterend", b);
+}
+
+function showPath(){
+  run = null;
+  stopConfetti();
+  $("done").classList.remove("show");
+  $("finale").classList.remove("show");
+  gameScreen.classList.add("hidden");
+  pathScreen.classList.remove("hidden");
+  var total = TIER_ORDER.reduce(function(n, t){ return n + tierCompleted(t); }, 0);
+  $("dateline").innerHTML = allMastered()
+    ? "<span>Mastered — all 12 rounds at three stars</span>"
+    : "<span>" + total + " of 12 rounds cleared</span>";
+  renderPath();
+}
+
+/* ================= RUN / GAME ================= */
+function runPuzzles(){ return BANK[run.tier].slice(run.index * RUN_LEN, run.index * RUN_LEN + RUN_LEN); }
+function puzzle(){ return runPuzzles()[runPos]; }
+
+function startRun(tier, index){
+  run = { tier: tier, index: index };
+  runPos = 0;
+  runResults = new Array(RUN_LEN).fill(null);
+  runHints = 0;
+  runReveals = 0;
+  streak = 0;
+  pathScreen.classList.add("hidden");
+  $("done").classList.remove("show");
+  gameScreen.classList.remove("hidden");
+  gameScreen.setAttribute("data-tier", tier);
+  $("done").setAttribute("data-tier", tier);
+  $("dateline").innerHTML = "";
+  $("runLabel").textContent = TIER_LABEL[tier] + " · Round " + (index + 1);
+  var best = state.best[tier][index];
+  $("best").innerHTML = best != null ? starMarkup(best) : "&mdash;";
+  prevStars = 3;
+  loadPuzzle();
+}
+
+function loadPuzzle(){
+  var a = puzzle().a;
+  guess = new Array(a.length).fill(null);
+  locked = new Array(a.length).fill(false);
+  over = false;
+  hintsUsed = 0;
+  setMessage("");
+  hintBtn.style.display = "";
+  revealBtn.style.display = "";
+  submitBtn.style.display = "";
+  nextBtn.style.display = "none";
+  revealBtn.disabled = false;
+  renderStrip();
+  renderMeter(false);
+  renderDots();
+  renderClues("play");
+  renderAnswer();
+  updateHintBtn();
+}
+
+function renderStrip(){
+  $("streak").textContent = streak;
+  document.querySelector(".streak-wrap").classList.toggle("streak-on", streak >= 3);
+}
+
+function renderDots(){
+  dotsEl.innerHTML = "";
+  for (var i = 0; i < RUN_LEN; i++){
+    var d = document.createElement("div");
+    var cls = "dot";
+    if (runResults[i] === "solved") cls += " done";
+    else if (runResults[i] === "revealed") cls += " revealed";
+    if (i === runPos && !over) cls += " current";
+    d.className = cls;
+    dotsEl.appendChild(d);
+  }
+}
+
+function renderClues(mode){ // "play" | "solved" | "given"
+  cluesEl.innerHTML = "";
+  puzzle().c.forEach(function(pair){
+    var row = document.createElement("div");
+    row.className = "clue" + (mode === "solved" ? " solved" : mode === "given" ? " given" : "");
+    var slot = document.createElement("span");
+    slot.className = "slot";
+    slot.textContent = mode === "play" ? "+" : puzzle().a;
+    var word = document.createElement("span");
+    word.className = "word";
+    word.textContent = pair[0];
+    if (pair[1] === "before"){ row.appendChild(word); row.appendChild(slot); }
+    else { row.appendChild(slot); row.appendChild(word); }
+    cluesEl.appendChild(row);
+  });
+}
+
+function renderAnswer(){
+  answerEl.innerHTML = "";
+  var a = puzzle().a;
+  for (var i = 0; i < a.length; i++){
+    var t = document.createElement("div");
+    t.className = "tile";
+    if (locked[i]){ t.classList.add("hinted","filled"); t.textContent = a[i]; }
+    else if (guess[i]){ t.classList.add("filled"); t.textContent = guess[i]; }
+    answerEl.appendChild(t);
+  }
+}
+
+function setMessage(text, kind){ msgEl.textContent = text || ""; msgEl.className = kind || ""; }
+
+function updateHintBtn(){
+  var unrevealed = locked.filter(function(x){ return !x; }).length;
+  hintBtn.disabled = unrevealed <= 1;
+}
+
+function firstEmpty(){ for (var i = 0; i < guess.length; i++) if (!locked[i] && !guess[i]) return i; return -1; }
+function lastFilled(){ for (var i = guess.length - 1; i >= 0; i--) if (!locked[i] && guess[i]) return i; return -1; }
+
+function typeLetter(ch){ if (over) return; var i = firstEmpty(); if (i === -1) return; guess[i] = ch; renderAnswer(); }
+function backspace(){ if (over) return; var i = lastFilled(); if (i === -1) return; guess[i] = null; setMessage(""); renderAnswer(); }
+
+function currentWord(){
+  var a = puzzle().a, out = "";
+  for (var i = 0; i < a.length; i++){
+    var ch = locked[i] ? a[i] : guess[i];
+    if (!ch) return null;
+    out += ch;
+  }
+  return out;
+}
+
+function check(){
+  if (over) return;
+  var w = currentWord();
+  if (!w){ setMessage("Fill in every letter first.", "err"); return; }
+  if (w === puzzle().a){ win(); }
+  else {
+    streak = 0;
+    renderStrip();
+    setMessage("Not the one — try again.", "err");
+    answerEl.classList.remove("shake"); void answerEl.offsetWidth; answerEl.classList.add("shake");
+  }
+}
+
+function praise(){
+  var lines = ["Threaded it!","Sharp!","Nice one.","Got it!","Clean solve."];
+  return lines[runPos % lines.length];
+}
+
+function win(){
+  over = true;
+  streak += 1;
+  runResults[runPos] = "solved";
+  renderStrip();
+  renderDots();
+  var tiles = answerEl.children, a = puzzle().a;
+  for (var i = 0; i < tiles.length; i++){
+    (function(t, ch, d){
+      setTimeout(function(){ t.classList.remove("hinted"); t.classList.add("correct","flip"); t.textContent = ch; }, d);
+    })(tiles[i], a[i], i * 80);
+  }
+  setTimeout(function(){ renderClues("solved"); }, a.length * 80 + 180);
+  setMessage(praise(), "win");
+  showNext();
+}
+
+function reveal(){
+  if (over) return;
+  over = true;
+  streak = 0;
+  runResults[runPos] = "revealed";
+  runReveals += 1;
+  renderStrip();
+  renderMeter(true);
+  renderDots();
+  var tiles = answerEl.children, a = puzzle().a;
+  for (var i = 0; i < tiles.length; i++){ tiles[i].className = "tile filled given"; tiles[i].textContent = a[i]; }
+  renderClues("given");
+  setMessage("The thread was " + a + ".", "err");
+  showNext();
+}
+
+function showNext(){
+  hintBtn.style.display = "none";
+  revealBtn.style.display = "none";
+  submitBtn.style.display = "none";
+  nextBtn.style.display = "";
+  nextBtn.innerHTML = (runPos + 1 >= RUN_LEN) ? "Finish&nbsp;&rarr;" : "Next&nbsp;&rarr;";
+}
+
+function advance(){
+  if (runPos + 1 >= RUN_LEN) finishRun();
+  else { runPos += 1; loadPuzzle(); }
+}
+
+function hint(){
+  if (over) return;
+  var a = puzzle().a, spots = [];
+  for (var i = 0; i < a.length; i++) if (!locked[i]) spots.push(i);
+  if (spots.length <= 1) return;
+  /* First hint anchors the word with its first letter; later hints reveal a
+     random remaining letter. Hints count toward the run's star rating;
+     streak is untouched (only a wrong guess breaks a streak). */
+  var pick = hintsUsed === 0 && !locked[0] ? 0 : spots[Math.floor(Math.random() * spots.length)];
+  runHints += 1;
+  hintsUsed += 1;
+  locked[pick] = true;
+  guess[pick] = null;
+  renderMeter(true);
+  renderAnswer();
+  updateHintBtn();
+}
+
+function finishRun(){
+  var wasMastered = allMastered();
+  var stars = currentStars();
+  var prev = state.best[run.tier][run.index];
+  var isBest = prev == null || stars > prev;
+  if (isBest){ state.best[run.tier][run.index] = stars; saveState(); }
+  /* Completing the set (this run was the last one below 3 stars) launches
+     the finale instead of the usual round-complete card. */
+  if (!wasMastered && allMastered()){ showFinale(); return; }
+  $("done").setAttribute("data-tier", run.tier);
+  $("donePill").textContent = TIER_LABEL[run.tier] + " · Round " + (run.index + 1);
+  $("doneTitle").textContent = stars === 3 ? "Flawless!" : (stars === 2 ? "Well threaded!" : "Round complete!");
+  $("doneStars").innerHTML = starMarkup(stars);
+
+  var aid;
+  if (runHints === 0 && runReveals === 0) aid = "No hints used — perfect mastery.";
+  else {
+    var parts = [];
+    if (runHints) parts.push(runHints + (runHints === 1 ? " hint" : " hints"));
+    if (runReveals) parts.push(runReveals + (runReveals === 1 ? " reveal" : " reveals"));
+    aid = parts.join(" · ") + " used.";
+  }
+  var note;
+  if (isBest && prev == null) note = "First rating on the board!";
+  else if (isBest) note = "New best — up from " + prev + " star" + (prev === 1 ? "" : "s") + "!";
+  else note = "Your best stays " + prev + " star" + (prev === 1 ? "" : "s") + ".";
+  var bestEl = $("doneBest");
+  bestEl.textContent = aid + " " + note;
+  bestEl.className = isBest ? "new" : "";
+  $("done").classList.add("show");
+}
+
+/* ================= FINALE ================= */
+function buildFinaleGrid(){
+  var g = $("finaleGrid");
+  g.innerHTML = "";
+  TIER_ORDER.forEach(function(t){
+    var row = document.createElement("div");
+    row.className = "finale-row";
+    row.setAttribute("data-tier", t);
+    var tag = document.createElement("span");
+    tag.className = "tier-tag";
+    tag.textContent = TIER_LABEL[t];
+    var dots = document.createElement("div");
+    dots.className = "finale-dots";
+    for (var i = 0; i < RUNS_PER_TIER; i++){
+      var d = document.createElement("span");
+      d.className = "finale-dot";
+      d.textContent = "★";
+      dots.appendChild(d);
+    }
+    row.appendChild(tag); row.appendChild(dots);
+    g.appendChild(row);
+  });
+}
+
+function showFinale(){
+  buildFinaleGrid();
+  $("finale").classList.add("show");
+  launchConfetti();
+}
+function closeFinale(){
+  stopConfetti();
+  $("finale").classList.remove("show");
+  showPath();
+}
+
+var confettiRAF = null;
+function stopConfetti(){
+  if (confettiRAF){ cancelAnimationFrame(confettiRAF); confettiRAF = null; }
+  var c = $("confetti"), ctx = c && c.getContext("2d");
+  if (ctx) ctx.clearRect(0, 0, c.width, c.height);
+}
+function cssVar(name, fallback){
+  var v = getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+  return v || fallback;
+}
+function drawStar(ctx, R){
+  var r = R * 0.45;
+  ctx.beginPath();
+  for (var i = 0; i < 10; i++){
+    var rad = (i % 2 === 0) ? R : r;
+    var a = Math.PI / 5 * i - Math.PI / 2;
+    var x = Math.cos(a) * rad, y = Math.sin(a) * rad;
+    if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+  }
+  ctx.closePath();
+  ctx.fill();
+}
+function launchConfetti(){
+  stopConfetti();
+  if (window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+  var cv = $("confetti"), ctx = cv.getContext("2d");
+  var dpr = Math.min(window.devicePixelRatio || 1, 2);
+  var W = cv.clientWidth, H = cv.clientHeight;
+  cv.width = W * dpr; cv.height = H * dpr;
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  var colors = [cssVar("--gold", "#C9930A"), "#E7C766", cssVar("--accent", "#2742C9"), cssVar("--hard", "#B23A3A")];
+  var parts = [];
+  for (var i = 0; i < 100; i++){
+    parts.push({
+      x: Math.random() * W, y: -20 - Math.random() * H,
+      r: 4 + Math.random() * 5, c: colors[i % colors.length],
+      vx: -1 + Math.random() * 2, vy: 1.6 + Math.random() * 2.6,
+      rot: Math.random() * 6.28, vr: -0.16 + Math.random() * 0.32,
+      star: Math.random() < 0.45
+    });
+  }
+  var start = null, DURATION = 4400;
+  function frame(ts){
+    if (start === null) start = ts;
+    ctx.clearRect(0, 0, W, H);
+    for (var i = 0; i < parts.length; i++){
+      var p = parts[i];
+      p.x += p.vx; p.y += p.vy; p.vy += 0.02; p.rot += p.vr;
+      if (p.y > H + 20){ p.y = -20; p.x = Math.random() * W; }
+      ctx.save();
+      ctx.translate(p.x, p.y); ctx.rotate(p.rot); ctx.fillStyle = p.c;
+      if (p.star) drawStar(ctx, p.r);
+      else ctx.fillRect(-p.r / 2, -p.r / 2, p.r, p.r * 0.6);
+      ctx.restore();
+    }
+    if (ts - start < DURATION) confettiRAF = requestAnimationFrame(frame);
+    else stopConfetti();
+  }
+  confettiRAF = requestAnimationFrame(frame);
+}
+
+/* ---------- keyboard ---------- */
+var ROWS = ["QWERTYUIOP","ASDFGHJKL","ZXCVBNM"];
+var kb = $("keyboard");
+ROWS.forEach(function(row, ri){
+  var r = document.createElement("div");
+  r.className = "krow";
+  if (ri === 2){
+    /* invisible spacer balances the backspace key now that submitting
+       lives in the actions row (Submit) instead of a keyboard ENTER */
+    var spacer = document.createElement("div");
+    spacer.className = "key wide spacer";
+    spacer.setAttribute("aria-hidden", "true");
+    r.appendChild(spacer);
+  }
+  row.split("").forEach(function(ch){ r.appendChild(makeKey(ch, "", function(){ typeLetter(ch); })); });
+  if (ri === 2) r.appendChild(makeKey("⌫", "wide", backspace, "Backspace"));
+  kb.appendChild(r);
+});
+function makeKey(label, cls, fn, aria){
+  var k = document.createElement("button");
+  k.type = "button";
+  k.className = "key" + (cls ? " " + cls : "");
+  k.textContent = label;
+  if (aria) k.setAttribute("aria-label", aria);
+  k.addEventListener("click", fn);
+  return k;
+}
+
+document.addEventListener("keydown", function(e){
+  if (e.metaKey || e.ctrlKey || e.altKey) return;
+  if (gameScreen.classList.contains("hidden") || $("done").classList.contains("show")
+      || $("finale").classList.contains("show")) return;
+  if (over){
+    if (e.key === "Enter"){ e.preventDefault(); advance(); }
+    return;
+  }
+  if (e.key === "Enter"){ e.preventDefault(); check(); }
+  else if (e.key === "Backspace"){ e.preventDefault(); backspace(); }
+  else if (/^[a-zA-Z]$/.test(e.key)){ typeLetter(e.key.toUpperCase()); }
+});
+
+hintBtn.addEventListener("click", hint);
+revealBtn.addEventListener("click", reveal);
+submitBtn.addEventListener("click", check);
+nextBtn.addEventListener("click", advance);
+$("backBtn").addEventListener("click", showPath);
+$("restartBtn").addEventListener("click", function(){ startRun(run.tier, run.index); });
+$("againBtn").addEventListener("click", function(){ startRun(run.tier, run.index); });
+$("toPathBtn").addEventListener("click", showPath);
+$("finaleClose").addEventListener("click", closeFinale);
+
+showPath();
+})();
+</script>
+
+</body>
+</html>
