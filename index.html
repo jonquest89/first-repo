@@ -344,6 +344,7 @@
   .btn.hint{ color:var(--gold); border-color:var(--gold); }
   .btn.reveal{ color:var(--hard); border-color:var(--hard); }
   .btn.primary{ background:var(--accent); color:var(--accent-ink); border-color:var(--accent); }
+  .btn.submit{ flex:1 1 auto; padding-top:12px; padding-bottom:12px; font-size:13px; letter-spacing:.12em; }
   .btn[disabled]{ opacity:.4; cursor:default; }
 
   #keyboard{
@@ -368,6 +369,7 @@
   }
   .key.wide{ max-width:66px; flex:1.6 1 0; font-size:12px; letter-spacing:.05em; }
   .key:active{ background:var(--tile-empty); transform:translateY(1px); }
+  .key.spacer{ visibility:hidden; box-shadow:none; pointer-events:none; }
 
   /* ---------- Run-complete overlay ---------- */
   #done{
@@ -487,6 +489,7 @@
       <div class="actions">
         <button class="btn hint" id="hintBtn">Hint</button>
         <button class="btn reveal" id="revealBtn">Reveal</button>
+        <button class="btn primary submit" id="submitBtn">Submit</button>
         <button class="btn primary" id="nextBtn" style="display:none">Next&nbsp;&rarr;</button>
       </div>
     </main>
@@ -698,7 +701,8 @@ var hintsUsed = 0;       // hints on the current puzzle (drives first-letter log
 var $ = function(id){ return document.getElementById(id); };
 var pathScreen = $("pathScreen"), gameScreen = $("gameScreen"),
     cluesEl = $("clues"), answerEl = $("answer"), msgEl = $("message"),
-    hintBtn = $("hintBtn"), revealBtn = $("revealBtn"), nextBtn = $("nextBtn"),
+    hintBtn = $("hintBtn"), revealBtn = $("revealBtn"),
+    submitBtn = $("submitBtn"), nextBtn = $("nextBtn"),
     dotsEl = $("dots");
 
 function hintUnits(){ return runHints + REVEAL_HINT_COST * runReveals; }
@@ -847,6 +851,7 @@ function loadPuzzle(){
   setMessage("");
   hintBtn.style.display = "";
   revealBtn.style.display = "";
+  submitBtn.style.display = "";
   nextBtn.style.display = "none";
   revealBtn.disabled = false;
   renderStrip();
@@ -981,6 +986,7 @@ function reveal(){
 function showNext(){
   hintBtn.style.display = "none";
   revealBtn.style.display = "none";
+  submitBtn.style.display = "none";
   nextBtn.style.display = "";
   nextBtn.innerHTML = (runPos + 1 >= RUN_LEN) ? "Finish&nbsp;&rarr;" : "Next&nbsp;&rarr;";
 }
@@ -1142,7 +1148,14 @@ var kb = $("keyboard");
 ROWS.forEach(function(row, ri){
   var r = document.createElement("div");
   r.className = "krow";
-  if (ri === 2) r.appendChild(makeKey("ENTER", "wide", check));
+  if (ri === 2){
+    /* invisible spacer balances the backspace key now that submitting
+       lives in the actions row (Submit) instead of a keyboard ENTER */
+    var spacer = document.createElement("div");
+    spacer.className = "key wide spacer";
+    spacer.setAttribute("aria-hidden", "true");
+    r.appendChild(spacer);
+  }
   row.split("").forEach(function(ch){ r.appendChild(makeKey(ch, "", function(){ typeLetter(ch); })); });
   if (ri === 2) r.appendChild(makeKey("⌫", "wide", backspace, "Backspace"));
   kb.appendChild(r);
@@ -1172,6 +1185,7 @@ document.addEventListener("keydown", function(e){
 
 hintBtn.addEventListener("click", hint);
 revealBtn.addEventListener("click", reveal);
+submitBtn.addEventListener("click", check);
 nextBtn.addEventListener("click", advance);
 $("backBtn").addEventListener("click", showPath);
 $("restartBtn").addEventListener("click", function(){ startRun(run.tier, run.index); });
